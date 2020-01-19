@@ -12,6 +12,10 @@ export interface ILogin {
     password?: Password;
 }
 
+export interface IAuth {
+    token: string;
+}
+
 export interface IUser {
     username?: Username;
     password?: Password;
@@ -107,12 +111,18 @@ export class UserRepository extends Loggable {
         BowLog.log1(myself, " id=" + id);
 
         const u = await UserModel.findByIdAsync(id);
-        const user: IUserInfo = {
+        u.password = ""; // we dont return password for security reasons
+        const user = UserRepository.doc2User(u);
+        return user;
+    }
+
+    public static doc2User(u: IUserDocument) {
+        return {
             username: u.username,
             name: u.name,
+            password: u.password,
             userId: u._id
-        };
-        return user;
+         };
     }
 
     public static async listUsers() {
@@ -120,14 +130,16 @@ export class UserRepository extends Loggable {
         BowLog.log1(myself, "");
 
         const userDocs = await UserModel.findAsync();
-        const users = userDocs.map( (u: IUserDocument) => {
-            return {
-               username: u.username,
-               name: u.name,
-               userId: u._id
-            };
-        });
+        const users = userDocs.map( (u: IUserDocument) => UserRepository.doc2UserInfo(u) );
         return users;
+    }
+
+    public static doc2UserInfo(u: IUserDocument) {
+        return {
+            username: u.username,
+            name: u.name,
+            userId: u._id
+         };
     }
 
     public static async validateUser(u: IUser) {

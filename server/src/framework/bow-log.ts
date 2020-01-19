@@ -34,6 +34,11 @@ export default class BowLog {
        }
     }
 
+    public static dir(myself: string, obj: any) {
+      this.log(myself, "");
+      console.dir(obj);
+    }
+
     public static logobj(myself: string, message: string, obj: any) {
         let tmp = "";
         if (obj != null) {

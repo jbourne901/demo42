@@ -54,7 +54,7 @@ export default class UserController extends Controller {
         return UserController.addUser(user, req, res, next);
     }
 
-    protected static async updateUser(user: IUser, req: Request, res: Response, 
+    protected static async updateUser(user: IUser, req: Request, res: Response,
                                       next: NextFunction) {
         const {userId, name, username, password} = user;
         const saveUser = {
