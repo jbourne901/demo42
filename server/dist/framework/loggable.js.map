@@ -1,1 +1,0 @@
-{"version":3,"file":"loggable.js","sourceRoot":"","sources":["../../src/framework/loggable.ts"],"names":[],"mappings":";;AAAA,MAAqB,QAAQ;IACf,MAAM,CAAC,YAAY;QACzB,OAAO,UAAU,CAAC;IACtB,CAAC;IAES,MAAM,CAAC,SAAS,CAAC,QAAgB;QACvC,OAAO,IAAI,CAAC,YAAY,EAAE,GAAG,GAAG,GAAG,QAAQ,CAAC;IAChD,CAAC;CACJ;AARD,2BAQC"}
