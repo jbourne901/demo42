@@ -8,7 +8,7 @@ export default class AuthRouter extends BowRouter {
         const myself = this.getMyself("getRouter");
         const router = express.Router();
 
-        router.get("/login", (req: Request, res: Response, next: NextFunction) =>
+        router.post("/login", (req: Request, res: Response, next: NextFunction) =>
                                              AuthController.login(req, res, next));
 
         return router;

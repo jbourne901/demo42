@@ -28,6 +28,10 @@ export default class BowLog {
       this.log(myself + "5", message);
     }
 
+    public static log6(myself: string, message: string) {
+      this.log(myself + "6", message);
+    }
+
     public static debug(myself: string, message: string) {
        if (this.DEBUG_LEVEL > 0) {
          this.log(myself, message);

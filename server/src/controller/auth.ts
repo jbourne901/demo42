@@ -11,36 +11,46 @@ export default class AuthController extends Controller {
                               res: express.Response,
                               next: express.NextFunction) {
         const myself = this.getMyself("login");
-        BowLog.log1(myself, "req=");
-        BowLog.dir(myself, req);
 
         try {
-            const login = req.body;
+            const login = req.body.login;
+            BowLog.log1(myself, "+++login");
+            BowLog.dir(myself, login);
 
-            const username = req.body.username;
-            const password = req.body.password;
-            const user = await UserRepository.findOneByUsername(username);
-            BowLog.log2(myself, " user=");
-
-            if (user == null) {
+            const username = login.username;
+            const password = login.password;
+            const userDoc = await UserRepository.findOneByUsername(username);
+            if (!userDoc) {
                 return Controller.sendError("Login failed", req, res, next);
             }
-            const isMatch = await bcrypt.compare(password, user.password);
+            BowLog.log2(myself, " userDoc.username=" + userDoc.username + " userDoc.password=" + userDoc.password + " userDoc.name=" + userDoc.name);
+            const user = UserRepository.doc2User(userDoc);
+            BowLog.log3(myself, " user=");
+            BowLog.dir(myself, user);
 
-            BowLog.log3(myself, "isMatch=" + isMatch);
+            if (!user) {
+                return Controller.sendError("Login failed", req, res, next);
+            }
+            BowLog.log4(myself, "passwrod=" + password + " user.password=" + user.password);
+            const isMatch = await bcrypt.compare(password || "", user.password || "");
+
+            BowLog.log4(myself, "isMatch=" + isMatch);
 
             if (! isMatch) {
-                return Controller.sendError("Login failed", req, res, next);
+                // return Controller.sendError("Login failed", req, res, next);
             }
 
-            const payload = { id: user._id, name: user.name };
-            BowLog.log4(myself, "payload=" + payload);
+            const payload = { id: user.userId, name: user.name };
+            BowLog.log6(myself, "payload=");
+            BowLog.dir(myself, payload);
             const secret = process.env.JWT_SECRET as string;
             const signOpts: SignOptions = { expiresIn: 31556926 };
             const token = jwt.sign( payload, secret, signOpts);
             const auth: IAuth = { token: "Bearer " + token };
             return Controller.sendSuccessWithPayload(auth, req, res, next);
         } catch ( err ) {
+            BowLog.error(myself, "err=");
+            BowLog.dir(myself, err);
             return this.sendError(err, req, res, next);
         }
     }

@@ -3,12 +3,12 @@ import createError from "create-error";
 import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
-import debug from "debug";
 
 import mongooseAsync from "./framework/mongooseAsync";
 import Loggable from "./framework/loggable";
-import UserRouter from "./routes/user";
 import BowLog from "./framework/bow-log";
+import UserRouter from "./routes/user";
+import AuthRouter from "./routes/auth";
 
 class App extends Loggable {
 
@@ -37,6 +37,7 @@ class App extends Loggable {
     app.use(express.urlencoded({extended: true}));
 
     app.use("/api/user", UserRouter.getRouter());
+    app.use("/api/auth", AuthRouter.getRouter());
 
     const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
                             BowLog.log1(myself, "notFoundHandler");

@@ -7,6 +7,7 @@ import { IUserService, IUserGetResult } from '../../../service/user';
 import Loading from "../../loading";
 import { IServiceResult } from '../../../service/service-result';
 import ValidationError from "../../validation-error";
+import EditField from '../../edit-field';
 
 interface IParams {
    userId: string;
@@ -189,42 +190,22 @@ class UserEditInternal extends React.Component<IProps, IState> {
                                          this.onSubmit(e) 
                                }
                 >
-                    <div className="form-group-control">
-                       <label>Name:</label>
-                       <input type="text" name="name" value={name} 
-                           onChange={ (e:React.ChangeEvent<HTMLInputElement>) => 
-                                         this.onNameChange(e) 
-                                    }
-                       />
-                       <ValidationError name="name" error={nameError} />
-                    </div>
-                    <div className="form-group-control">
-                       <label>Username:</label>
-                       <input type="text" name="username" value={username} 
-                           onChange={ (e:React.ChangeEvent<HTMLInputElement>) =>
-                                          this.onUsernameChange(e) 
-                                    }
-                       />
-                       <ValidationError name="username" error={usernameError} />
-                    </div>
-                    <div className="form-group-control">
-                       <label>Password:</label>
-                       <input type="password" name="password" value={password} 
-                           onChange={ (e:React.ChangeEvent<HTMLInputElement>) =>
-                                          this.onPasswordChange(e) 
-                                    }
-                       />
-                       <ValidationError name="password" error={passwordError} />
-                    </div>
-                    <div className="form-group-control">
-                       <label>Confirm Password:</label>
-                       <input type="password" name="password2" value={password2} 
-                           onChange={ (e:React.ChangeEvent<HTMLInputElement>) =>
-                                          this.onPassword2Change(e) 
-                                    }
-                       />
-                       <ValidationError name="password2" error={password2Error} />
-                    </div>
+                    <EditField label="Name" name="name" value={name} 
+                               error={nameError}
+                               onChange={ (e) => this.onNameChange(e) }
+                    />
+                    <EditField label="Username" name="username" value={username}
+                               error={usernameError}
+                               onChange={ (e) => this.onUsernameChange(e) }
+                    />
+                    <EditField label="Password" name="password" value={password}
+                               error={passwordError} type="password"
+                               onChange={ (e) => this.onPasswordChange(e) }
+                    />
+                    <EditField label="Confirm Password" name="password2" value={password2}
+                               error={password2Error} type="password"
+                               onChange={ (e) => this.onPassword2Change(e) }
+                    />
                     <div>
                         <ValidationError name="error" error={error} />
                     </div>
