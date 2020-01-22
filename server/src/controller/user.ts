@@ -5,79 +5,58 @@ import BowLog from "../framework/bow-log";
 
 export default class UserController extends Controller {
 
-    public static async listUsers(req: Request, res: Response, next: NextFunction) {
-        const myself = UserController.getClassName();
-        BowLog.log1(myself, "GET /api/user ");
-        return UserRepository.listUsers()
+    public static async userList(req: Request, res: Response, next: NextFunction) {
+        const myself = UserController.getMyself("userList");
+        BowLog.log1(myself, "");
+        return UserRepository.userList()
                              .then( (users: IUserInfo[]) =>
                                      Controller.sendSuccessWithPayload(users, req, res, next)
                                   )
-                             .catch( (err: any) =>
-                                     Controller.sendError(err, req, res, next)
-                                   );
+                             .catch( (err: any) => this.processError(err, req, res, next) );
     }
 
-    public static deleteUser(req: Request, res: Response, next: NextFunction) {
-        const myself = UserController.getMyself("deleteUser");
+    public static userDelete(req: Request, res: Response, next: NextFunction) {
+        const myself = UserController.getMyself("userDelete");
         console.dir(req.body);
-        const id = req.body.userId;
-        BowLog.log1(myself, "deleteUser userId=" + id);
-        return UserRepository.deleteUser(id)
+        const id = req.body.id;
+        BowLog.log1(myself, "userDelete id=" + id);
+        return UserRepository.userDelete(id)
                .then( () => Controller.sendSuccess(req, res, next))
-               .catch( (err: any) => Controller.sendError(err, req, res, next));
+               .catch( (err: any) => this.processError(err, req, res, next) );
     }
 
-    public static getUser(req: Request, res: Response, next: NextFunction) {
+    public static userGet(req: Request, res: Response, next: NextFunction) {
         const myself = UserController.getMyself("getUser");
-        const userId = req.body.userId;
-        BowLog.log1(myself, "getUser userId=" + userId);
-        return UserRepository.getUser(userId)
+        const id = req.body.id;
+        BowLog.log1(myself, "userGet id=" + id);
+        return UserRepository.userGet(id)
                .then( (user: IUser) => Controller.sendSuccessWithPayload(user, req, res, next))
-               .catch( (err: any) => Controller.sendError(err, req, res, next));
+               .catch( (err: any) => this.processError(err, req, res, next) );
     }
 
-    public static async saveUser(req: Request, res: Response, next: NextFunction) {
-        const myself = this.getMyself("saveUser");
+    public static async userSave(req: Request, res: Response, next: NextFunction) {
+        const myself = this.getMyself("userSave");
         const user = req.body;
         BowLog.log1(myself, "user=");
         console.dir(user);
-        const errors = await UserRepository.validateUser(user);
-        if (errors != null) {
-            BowLog.error(myself, "errors=" );
-            console.dir(errors);
-            return UserController.sendErrors(errors, req, res, next);
-        }
 
-        if (user && user.userId && user.userId.length > 0) {
-            return UserController.updateUser(user, req, res, next);
+        if (user && user.id) {
+            return UserController.userUpdate(user, req, res, next);
         }
-        return UserController.addUser(user, req, res, next);
+        return UserController.userAdd(user, req, res, next);
     }
 
-    protected static async updateUser(user: IUser, req: Request, res: Response,
+    protected static async userUpdate(user: IUser, req: Request, res: Response,
                                       next: NextFunction) {
-        const {userId, name, username, password} = user;
-        const saveUser = {
-            userId,
-            name,
-            username,
-            password
-        };
-        return UserRepository.updateUser(saveUser)
+        return UserRepository.userUpdate(user)
                              .then( () => UserController.sendSuccess(req, res, next))
-                             .catch( (err: any) => UserController.sendError(err, req, res, next));
+                             .catch( (err: any) => this.processError(err, req, res, next) );
     }
 
-    protected static async addUser(user: IUser, req: Request, res: Response, next: NextFunction) {
-        const {name, username, password} = user;
-        const newUser = {
-            name,
-            username,
-            password
-        };
-        return UserRepository.addUser(newUser)
+    protected static async userAdd(user: IUser, req: Request, res: Response, next: NextFunction) {
+        return UserRepository.userAdd(user)
                              .then( () => UserController.sendSuccess(req, res, next))
-                             .catch( (err: any) => UserController.sendError(err, req, res, next));
+                             .catch( (err: any) => this.processError(err, req, res, next) );
     }
 
     protected static getClassName() {

@@ -1,5 +1,4 @@
-import IUserInfo from "../model/user-info";
-import {IUser} from "../model/user";
+import {IUser, IUserInfo} from "../model/user";
 import axios from "axios";
 import extractSvcData from "./extract-svc-data";
 import {IServiceResult, IServiceResultWithPayload} from "./service-result";
@@ -9,8 +8,8 @@ export type IUserGetResult = IServiceResultWithPayload<IUser>;
 
 export interface IUserService {
     userList(): Promise<IUserListResult>;
-    userDelete(userId: string): Promise<IServiceResult>;
-    userGet(userId: string): Promise<IUserGetResult>;
+    userDelete(id: string): Promise<IServiceResult>;
+    userGet(id: string): Promise<IUserGetResult>;
     userSave(user: IUser): Promise<IServiceResult>;
 }
 
@@ -27,17 +26,17 @@ export class UserService implements IUserService {
                     .then( (res) => extractSvcData<IUserListResult>(res) );                                        
     }
 
-    userDelete(userId: string): Promise<IServiceResult> {
+    userDelete(id: string): Promise<IServiceResult> {
         const url = this.BASE_URL+"/delete";
         console.log("userDelete url="+url);
-        return axios.post<IServiceResult>(url,{userId})
+        return axios.post<IServiceResult>(url,{id})
                     .then( (res) => extractSvcData<IServiceResult>(res) );                                        
     }
 
-    userGet(userId: string) : Promise<IUserGetResult> {
+    userGet(id: string) : Promise<IUserGetResult> {
         const url = this.BASE_URL+"/get";
         console.log("userGet url="+url);
-        return axios.post<IUserGetResult>(url,{userId})
+        return axios.post<IUserGetResult>(url,{id})
                     .then( (res) => extractSvcData<IUserGetResult>(res) );                                        
     }
 

@@ -4,11 +4,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
 
-import mongooseAsync from "./framework/mongooseAsync";
 import Loggable from "./framework/loggable";
 import BowLog from "./framework/bow-log";
 import UserRouter from "./routes/user";
 import AuthRouter from "./routes/auth";
+import EPageRouter from "./routes/epage";
 
 class App extends Loggable {
 
@@ -22,11 +22,10 @@ class App extends Loggable {
         PORT = Number.parseInt(process.env.BIND_PORT || "", 10);
     }
     const HOST = process.env.BIND_HOST || "";
-    const DB_URL = process.env.DB_URL || "";
 
-    BowLog.log1(myself, "port=" + PORT + " host=" + HOST + " db_url=" + DB_URL);
+    BowLog.log1(myself, "port=" + PORT + " host=" + HOST);
 
-    mongooseAsync.connect(DB_URL, {useNewUrlParser: true , useUnifiedTopology: true});
+//    mongooseAsync.connect(DB_URL, {useNewUrlParser: true , useUnifiedTopology: true});
 
     const app: express.Application = express();
     app.set("port", PORT);
@@ -38,6 +37,7 @@ class App extends Loggable {
 
     app.use("/api/user", UserRouter.getRouter());
     app.use("/api/auth", AuthRouter.getRouter());
+    app.use("/api/epage", EPageRouter.getRouter());
 
     const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
                             BowLog.log1(myself, "notFoundHandler");

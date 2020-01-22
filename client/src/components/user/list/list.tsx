@@ -1,7 +1,7 @@
 import React from "react";
 import {withRouter, RouteComponentProps} from "react-router-dom";
 
-import IUserInfo from "../../../model/user-info";
+import {IUserInfo} from "../../../model/user";
 import Service from '../../../service';
 import {IUserService, IUserListResult} from '../../../service/user';
 import {IServiceResult} from "../../../service/service-result";
@@ -62,13 +62,13 @@ class UserListInternal extends React.Component<IProps, IState> {
     }
 
     onEdit(u: IUserInfo) {
-        this.props.history.push(`/users/${u.userId}`);
+        this.props.history.push(`/users/${u.id}`);
     }
 
     onDelete(u: IUserInfo) {
         if(window.confirm(`You sure you want to delete user ${u.name}?`)) {
             this.startLoading();
-            this.svc.userDelete(u.userId)
+            this.svc.userDelete(u.id)
                     .then( (res: IServiceResult) => this.serviceDeleteResult(res))
                     .catch( (err: any) => this.serviceError(err) );
         }
@@ -87,7 +87,7 @@ class UserListInternal extends React.Component<IProps, IState> {
 
     formatUser(u: IUserInfo) {
         return (
-            <tr key={u.userId}>
+            <tr key={u.id}>
                 <td>{u.name}</td>
                 <td>{u.username}</td>
                 <td>
@@ -109,6 +109,7 @@ class UserListInternal extends React.Component<IProps, IState> {
               <div>
                   <button onClick={ () => this.onAdd() }>Add</button>
               </div>
+              <hr />
               <table className="user-list-table">
                   <thead>
                       <tr>

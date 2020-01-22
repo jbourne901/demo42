@@ -30,7 +30,8 @@ class HomeInternal extends React.Component<IProps, IState> {
 
     componentDidMount() {
         const isLoggedIn = this.svc.isLoggedIn();
-        this.setState({isLoggedIn});
+        const authName = this.svc.getAuthName();
+        this.setState({isLoggedIn, authName});
     }
 
     onLogin() {

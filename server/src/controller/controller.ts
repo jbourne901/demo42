@@ -33,4 +33,13 @@ export default class Controller extends Loggable {
         res.json({result: "Error", errors});
     }
 
+    protected static processError(err: any, req: Request, res: Response, next: NextFunction) {
+        const myself = this.getMyself("processError");
+        BowLog.error(myself, "err=");
+        BowLog.dir(myself, err);
+        if (err.errors) {
+            return this.sendErrors(err.errors, req, res, next);
+        }
+        return this.sendError(err, req, res, next);
+    }
 }

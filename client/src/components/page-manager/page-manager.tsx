@@ -6,7 +6,11 @@ import LandingPage from "../landing";
 import CampaignList from "../campaigns/list";
 import UserList from "../user/list";
 import UserEdit from "../user/edit";
-
+import {IEPageInfo} from "../../model/epage";
+import { IEPageService, IEPageListResult } from "../../service/epage";
+import Service from "../../service";
+import EPageList from "../epage/list";
+import EPageEdit from "../epage/edit";
 
 interface IProps extends RouteComponentProps {
     onLogout(): void;
@@ -14,11 +18,67 @@ interface IProps extends RouteComponentProps {
     authName: string;
 }
 
-class PageManagerInternal extends React.Component<IProps> {
+interface IState {
+    isLoading: boolean;
+    pages: IEPageInfo[];
+}
+
+class PageManagerInternal extends React.Component<IProps, IState> {
+    svc: IEPageService;
+
+    constructor(props: IProps) {
+        super(props);
+        this.svc = Service.epage();
+        this.state = {
+            isLoading: false,
+            pages: []
+        };
+    }
 
     onLogout(e: React.MouseEvent<HTMLAnchorElement>) {
         e.preventDefault();
         this.props.onLogout();
+    }
+
+    componentDidMount() {
+        this.refreshPages();
+    }
+
+    startLoading() {
+        this.setState({isLoading: true});
+    }
+
+    stopLoading() {
+        this.setState({isLoading: false});
+    }
+
+    refreshPages() {
+        this.startLoading();
+        this.svc.epageList()
+            .then( (res: IEPageListResult) => this.serviceGetCallback(res) )
+            .catch( (err:any) => this.serviceGetError(err) );
+    }
+
+    serviceGetCallback(res: IEPageListResult) {
+        if(res.result === "OK") {
+            this.setState({isLoading: false, pages: res.payload});
+            return;
+        }
+        this.stopLoading();
+    }
+
+    serviceGetError(err: any) {
+        this.stopLoading();
+    }
+
+    formatPage(p: IEPageInfo) {
+        let type = p.type || "list";
+        const url = "/epage/" + p.id + "/" + type;
+        return (
+                <li className="nav-item" key={p.id}>                    
+                    <NavLink to={url}>{p.label}</NavLink>
+                </li>
+        );
     }
 
     public render() {
@@ -31,6 +91,8 @@ class PageManagerInternal extends React.Component<IProps> {
         console.dir(this.props);
         const authName = this.props.authName || "";
         const logoutMsg = "Logged in as: " + authName;
+        const pages = this.state.pages || [];
+        const listpages = pages.filter( (p) => p.type === "list" );
         return (
             <BrowserRouter>
                 <nav className="navbar navbar-inverse navbar-expand-lg">
@@ -39,9 +101,16 @@ class PageManagerInternal extends React.Component<IProps> {
                          <a className="navbar-brand" href="/#">SOLO</a>
                       </div>
                       <ul className="nav navbar-nav">
-                         <li> <NavLink to="/users"> Users </NavLink> </li>
-                         <li> <NavLink to="/campaigns"> Campaigns </NavLink> </li>
+                         <li> 
+                             <NavLink to="/users"> Users </NavLink>
+                         </li>
+                         <li> 
+                             <NavLink to="/campaigns"> Campaigns </NavLink> 
+                         </li>
                       </ul>
+                      <ul className="nav navbar-nav">
+                      {listpages.map( (p: IEPageInfo) => this.formatPage(p) )}
+                      </ul>                      
                       <ul className="nav navbar-nav navbar-right">
                         <li className="nav-item">
                            <a href="/#">
@@ -66,11 +135,20 @@ class PageManagerInternal extends React.Component<IProps> {
                    <PrivateRoute exact path="/users/add" isLoggedIn={isLoggedIn}>
                       <UserEdit />
                    </PrivateRoute>
-                   <PrivateRoute path="/users/:userId" isLoggedIn={isLoggedIn}>
+                   <PrivateRoute exact path="/users/:id" isLoggedIn={isLoggedIn}>
                       <UserEdit />
                    </PrivateRoute>
-                   <PrivateRoute path="/campaigns" isLoggedIn={isLoggedIn}>
+                   <PrivateRoute exact path="/campaigns" isLoggedIn={isLoggedIn}>
                       <CampaignList />
+                   </PrivateRoute>
+                   <PrivateRoute exact path="/epage/:epageid/list" isLoggedIn={isLoggedIn}>
+                      <EPageList />
+                   </PrivateRoute>
+                   <PrivateRoute exact path="/epage/:epageid/edit/:entityid" isLoggedIn={isLoggedIn}>
+                      <EPageEdit />
+                   </PrivateRoute>
+                   <PrivateRoute exact path="/epage/:epageid/edit" isLoggedIn={isLoggedIn}>
+                      <EPageEdit />
                    </PrivateRoute>
                    <PrivateRoute isLoggedIn={isLoggedIn}>
                        <LandingPage />

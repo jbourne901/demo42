@@ -10,7 +10,7 @@ import ValidationError from "../../validation-error";
 import EditField from '../../edit-field';
 
 interface IParams {
-   userId: string;
+   id: string;
 }
 
 interface IProps extends RouteComponentProps<IParams> {
@@ -39,7 +39,7 @@ class UserEditInternal extends React.Component<IProps, IState> {
     componentDidMount() {
         let id;
         if (this.props.match && this.props.match.params) {
-            id = this.props.match.params.userId;
+            id = this.props.match.params.id;
         }
         if (id && id.length>0 && id !== "add") {
             console.log("componentDidMount id = "+id);
@@ -137,10 +137,11 @@ class UserEditInternal extends React.Component<IProps, IState> {
     onSubmit(e: React.FormEvent<HTMLFormElement>) {
         console.log("onSubmit");
         e.preventDefault();
-        this.startSaving();        
-        if(this.state.user) {
-            console.dir(this.state.user);
-            this.svc.userSave(this.state.user)
+        this.startSaving();
+        const user = this.state.user || UserDefault;
+        if(user) {
+            console.dir(user);
+            this.svc.userSave(user)
                 .then( (res: IServiceResult) => this.serviceSaveCallback(res))
                 .catch( (err: any) => this.serviceSaveError(err));
         }

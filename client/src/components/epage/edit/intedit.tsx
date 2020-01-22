@@ -1,0 +1,233 @@
+import React from 'react';
+import {withRouter, RouteComponentProps} from "react-router-dom";
+import { IEPage, IEPageField, IEPageAction } from '../../../model/epage';
+import Loading from '../../loading';
+import IErrors from '../../../model/errors';
+import EditField from "../../edit-field";
+import ValidationError from "../../validation-error";
+import { IEPageService, IEPageGetResult, IEntityGetResult, IActionResult } from '../../../service/epage';
+import Service from '../../../service';
+
+interface IProps extends RouteComponentProps {
+    epageid: string;
+    entityid?: string;
+}
+
+interface IState {
+    epage?: IEPage;
+    isLoading: boolean;
+    entity?: any;
+    errors: IErrors,
+    touched: boolean;
+}
+
+class EPageIntEditInternal extends React.Component<IProps, IState> {
+
+    private svc: IEPageService;
+    constructor(props: IProps) {
+        super(props);
+        console.log("EPageIntEdit - constructor");
+        
+        this.svc = Service.epage();
+
+        this.state = {
+            isLoading: false,
+            errors: {},
+            touched: false
+        };
+    }
+
+    protected startLoading() {
+        this.setState({
+            isLoading: true
+        });
+    }
+
+    protected stopLoading() {
+        this.setState({
+            isLoading: true
+        });
+    }
+
+    public componentDidMount() {
+        const epageid = this.props.epageid;
+        console.log("EPageIntEdit - componentDidMount epageid="+epageid);
+        this.startLoading();
+        this.svc.epageGet(epageid)
+                .then( (res) => this.epageGetCallback(res) )
+                .catch( (err) => this.serviceError(err) );
+    }
+
+    protected serviceError(err: any) {
+        console.error("serviceError err=");
+        console.dir(err);
+        this.stopLoading();
+    }
+
+    protected epageGetCallback(res: IEPageGetResult) {
+        const entityid = this.props.entityid;
+        console.log("epageGetCallback res=");
+        console.dir(res);
+        if(res.result === "OK" && res.payload) {
+            const epage = res.payload;
+            if(entityid) {
+                this.setState({ epage: {...epage} });
+                this.svc.entityGet(epage.id, entityid)
+                        .then( (res) => this.entityGetCallback(res) )
+                        .catch( (err: any) => this.serviceError(err) );
+            } else {
+                console.log("epageGetCallback - entityid is blank - new entity - setting to defaults");
+                this.setState({
+                    isLoading: false,
+                    epage: {...epage}
+                });
+            }
+            return;
+        }
+        console.error("epageGetCallback - epage is blank");
+        this.serviceError("Error");
+    }
+
+    protected entityGetCallback(res: IEntityGetResult) {
+        console.log("entityGetCallback res=");
+        console.dir(res);
+        if(res && res.result === "OK" && res.payload) {
+            this.setState({
+                isLoading: false,
+                entity: res.payload
+            });
+            return;
+        }
+        console.error("entityGetCallback payload is blank");
+        this.serviceError("Error");
+    }
+
+    protected formatField(f: IEPageField) {        
+        const epage = this.state.epage;
+        let epageid = "";
+        if(epage) {
+            epageid = epage.id;            
+        }
+        const key = epageid + "_" + f.name;
+        let value = "";
+        const entity = this.state.entity;
+        let error = "";
+        if(entity) {
+            value = entity[f.name] || "";
+        }
+        error = this.state.errors[f.name];
+        const type = f.type || "text";
+        console.log("formatField key="+key+" label="+f.label+" name="+f.name+" value="+value+" error="+error+" type="+type);
+        console.dir(this.state.errors);        
+        return (
+            <EditField key={key} label={f.label} name={f.name} value={value} type={type}
+               error={error}
+               onChange={ (e) => this.onChange(e) }
+            />
+        );
+    }
+
+    protected onChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const name = e.target.name;
+        const value = e.target.value;
+
+        const entity = {...(this.state.entity || {}) };
+        const errors = {...this.state.errors};
+        entity[name] = value;
+        delete errors[name];
+        this.setState({entity, errors, touched: false});
+    }
+    protected onSubmit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+    }
+
+    protected formatAction(a: IEPageAction) {
+        const key = a.name;
+        return (
+            <button key={key} type="button" onClick={ () => this.onAction(a)}>{a.label}</button>
+        )
+    }
+
+    protected onAction(a: IEPageAction) {
+        console.log("onAction a=");
+        console.dir(a);
+        const entity = this.state.entity || {};
+        console.log("entity=");
+        console.log(entity);
+        this.startLoading();
+        this.svc.entityAction(a.id, entity)
+            .then( (res) => this.actionCallback(res) )
+            .catch( (err) => this.actionErrors(err) );
+    }
+
+    protected actionCallback(res: IActionResult) {
+        console.log("actionCallback res=");
+        console.dir(res);
+        if(res && res.result === "OK" && res.payload) {
+            if(res.payload.nextpage) {
+                const url = res.payload.nextpage;
+                console.log("actionCallback redirecting to "+url);
+                this.props.history.push(url);
+                return;
+            }
+            console.log("nextpage is blank - doing nothing");
+            this.stopLoading();
+        }
+        if(res.errors) {
+            return this.actionErrors(res);
+        }
+        console.error("actionCallback payload is blank and errors are blank")
+        this.serviceError("Error");
+    }
+
+    protected actionErrors(res: any) {
+        console.log("actionErrors - res=");
+        console.dir(res);
+        if(res.errors) {
+            return this.setState({
+                                   isLoading: false,
+                                   errors: {...res.errors}
+            });
+        }
+        console.log("actionErrors - errors is blank, dont know what to do");
+        this.stopLoading();        
+    }
+
+    public render() {
+        console.log("EPageIntEdit render");
+        if(this.state.isLoading) {
+            return <Loading />;
+        }
+        if(!this.state.epage) {
+            return <Loading />;
+        }
+
+        const epage = this.state.epage;
+        const fields = epage.fields;
+        const error = this.state.errors.error;
+        const actions = epage.pageactions;
+        
+        return (
+            <div>
+                <h2>EPageEdit</h2>
+                <form onSubmit={ (e:React.FormEvent<HTMLFormElement>) =>
+                                         this.onSubmit(e) 
+                               }
+                >
+                    {fields.map( (f)=> this.formatField(f))}
+                    <div>
+                        <ValidationError name="error" error={error} />
+                    </div>
+                    <hr />
+                    <div className="form-group-control">
+                        {actions.map( (a) => this.formatAction(a))}
+                    </div>
+                </form>
+            </div>
+        );
+    }   
+}
+
+const EPageIntEdit = withRouter(EPageIntEditInternal);
+
+export default EPageIntEdit;

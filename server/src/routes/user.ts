@@ -11,22 +11,22 @@ export default class UserRouter extends BowRouter {
 
         router.post("/list", (req: Request, res: Response, next: NextFunction) => {
             BowLog.log1(myself, "POST /api/user/list");
-            return UserController.listUsers(req, res, next);
+            return UserController.userList(req, res, next);
         });
 
         router.post("/delete", (req: Request, res: Response, next: NextFunction) => {
             BowLog.log1(myself, "POST /api/user/delete");
-            UserController.deleteUser(req, res, next);
+            UserController.userDelete(req, res, next);
         });
 
         router.post("/get", (req: Request, res: Response, next: NextFunction) => {
             BowLog.log1(myself, "++POST /api/user/get");
-            UserController.getUser(req, res, next);
+            UserController.userGet(req, res, next);
         });
 
         router.post("/save", (req: Request, res: Response, next: NextFunction) => {
             BowLog.log1(myself, "++POST /api/user/save");
-            UserController.saveUser(req, res, next);
+            UserController.userSave(req, res, next);
         });
 
         return router;

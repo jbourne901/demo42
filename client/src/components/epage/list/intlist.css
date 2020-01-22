@@ -1,0 +1,11 @@
+.intlist-table {
+   border: 1px solid;
+}
+
+.intlist-table tr td {
+   border: 1px solid;
+}
+
+.intlist-table td {
+   text-align: center;
+}

@@ -1,13 +1,19 @@
+export interface IUserInfo {
+    id: string;
+    name: string;
+    username: string;
+};
+
 export interface IUser {
-    userId: string;
+    id: string;
     name: string;
     username: string;
     password: string;
     password2: string;
 };
 
-export const UserDefault = {
-    userId: "",
+export const UserDefault: IUser = {
+    id: "",
     name: "",
     username: "",
     password: "",
