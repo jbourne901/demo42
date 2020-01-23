@@ -16,4 +16,5 @@ name TYPE_QUEUENAME not null
 create unique index ix_queue_queuename on queue(name);
 ------------------------------------------------------------------
 
+call EntityRegister('queue', 'Queue');
 

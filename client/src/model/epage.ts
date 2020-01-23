@@ -4,6 +4,7 @@ export interface IEPageInfo {
     name: string;
     type: string;
     url: string;
+    entity: string;
 };
 
 
@@ -31,6 +32,7 @@ export interface IEPage {
     pkname: string;
     fields: IEPageField[];
     pageactions: IEPageAction[];
+    entity: string;
 };
 
 export const IEPageDefault: IEPage = {
@@ -40,6 +42,7 @@ export const IEPageDefault: IEPage = {
     query: "",
     pkname: "",
     fields: [],
-    pageactions: []
+    pageactions: [],
+    entity: ""
 };
 

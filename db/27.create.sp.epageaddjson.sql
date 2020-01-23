@@ -11,6 +11,7 @@ _type epage.type%TYPE;
 _query epage.query%TYPE;
 _pkname epage.pkname%TYPE;
 _ordno epage.ordno%TYPE;
+_entity epage.entity%TYPE;
 _id epage.id%TYPE;
 _fields JSONB;
 _pageactions JSONB;
@@ -23,13 +24,14 @@ select doc->>'label' into _label;
 select doc->>'type' into _type;
 select doc->>'query' into _query;
 select doc->>'pkname' into _pkname;
+select doc->>'entity' into _entity;
 select doc->'fields' into _fields;
 select doc->'pageactions' into _pageactions;
 
-call LOGJSONADD( concat('EPageAddJSON1 name=',_name,',label=',_label,',query=',_query,',_pkname=',_pkname,' _type=',_type), doc);
+call LOGJSONADD( concat('EPageAddJSON1 name=',_name,',label=',_label,',query=',_query,',_pkname=',_pkname,' _type=',_type,' _entity=',_entity), doc);
 
-insert into epage(name,label,query,pkname,type)
-select _name, _label, _query, _pkname, _type;
+insert into epage(name,label,query,pkname,type,entity)
+select _name, _label, _query, _pkname, _type, _entity;
 
 select epage.id into _id from epage where name=_name;
 

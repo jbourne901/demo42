@@ -21,4 +21,6 @@ language TYPE_LANGUAGE
 create unique index ix_users_username on users(username);
 ------------------------------------------------------------------
 
+call EntityRegister('user', 'users');
+
 

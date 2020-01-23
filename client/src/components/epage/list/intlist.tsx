@@ -3,16 +3,19 @@ import {withRouter, RouteComponentProps } from "react-router-dom";
 import {IEPageService, IEntityListResult, IEPageGetResult, IActionResult} from "../../../service/epage";
 
 import Service from "../../../service";
+import {INotificationService} from "../../../service/notification";
 import {IEPage, IEPageField, IEPageAction} from '../../../model/epage';
 import EPageListItem from "./list-item";
 import "./intlist.css";
 import insertVars from '../../../framework/insert-vars';
+import withUniqueid from "../../with-uniqueid";
 
 interface IParam {
     id: string;
 }
 interface IProps extends RouteComponentProps {
     epageid: string;
+    uniqueid: string;
 }
 
 interface IState {
@@ -23,6 +26,7 @@ interface IState {
 
 class EPageIntListInternal extends React.Component<IProps, IState> {
     private svc: IEPageService;
+    private notification: INotificationService;
 
     public componentDidMount() {
         console.log("EPageIntList - componentDidMount props=");
@@ -34,6 +38,7 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
     constructor(props: IProps) {
         super(props);
         this.svc  = Service.epage();
+        this.notification = Service.notification();
         this.state = {
             isLoading: false,
             entities: [],
@@ -68,6 +73,7 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
             console.log("serviceGetCallback payload=");
             console.dir(res.payload);
             this.setState({isLoading: false, epage: res.payload});
+            this.notification.register(res.payload.entity, this.props.uniqueid, () => this.refreshEntities() );
             this.refreshEntities();
             return;
         }
@@ -201,6 +207,10 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
         }
     }
 
+    public componentWillUnmount() {
+        this.notification.unregister(this.props.uniqueid);
+    }
+
     public render() {
         const epage = this.state.epage;
         console.log("render epage=");
@@ -244,6 +254,7 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
     }    
 }
 
-const EPageIntList = withRouter(EPageIntListInternal);
+const tmp = withUniqueid(EPageIntListInternal)
+const EPageIntList = withRouter(tmp);
 
 export default EPageIntList;

@@ -23,6 +23,7 @@ select * from jsetstr(_js, 'label', label) into _js;
 select * from jsetstr(_js, 'query', concat(entity, 'ListJSON()') ) into _js;
 select * from jsetjson(_js, 'fields', _fields) into _js;
 select * from jsetjson(_js, 'pageactions', _pageactions) into _js;
+select * from jsetstr(_js, 'entity', entity) into _js;
 
 
 

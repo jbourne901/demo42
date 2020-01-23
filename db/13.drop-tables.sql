@@ -11,6 +11,7 @@ drop table if exists epagesection;
 drop table if exists epagefilter;
 drop table if exists language;
 drop table if exists numbers;
+drop table if exists entitytable;
 
 
 

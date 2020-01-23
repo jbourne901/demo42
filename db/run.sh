@@ -44,7 +44,11 @@ es 9.6.create.sp.kvjson.sql
 ess 10.create-extension-dblink.sql
 es 11.create.sp.makeramtablespace.sql
 ess 12.createtablespace.sql
+
 es 13.drop-tables.sql
+
+es 13.0.1.create.table.entitytable.sql
+es 13.0.2.create.sp.entityregister.sql
 
 es 13.1.create.sp.eventnotify.sql
 es 13.2.create.sp.eventlistenjson.sql
@@ -95,4 +99,5 @@ es 35.create.sp.queueupdatejson.sql
 es 36.create.sp.queueaddjson.sql
 es 37.create.sp.queuedeletejson.sql
 es 38.create.sp.queuesavejson.sql
+es 39.create.sp.queue.notify.sql
 

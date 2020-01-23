@@ -18,11 +18,15 @@ CREATE DOMAIN TYPE_EPAGETYPE varchar(20);
 drop domain if exists TYPE_EPAGEPKNAME;
 CREATE DOMAIN TYPE_EPAGEPKNAME varchar(20);
 
+drop domain if exists TYPE_EPAGEENTITY;
+CREATE DOMAIN TYPE_EPAGEENTITY varchar(40);
+
 
 call TRACE('create table epage');
 
 create table epage(
   id SERIAL PRIMARY KEY,
+  entity TYPE_EPAGEENTITY,
   name TYPE_EPAGENAME NOT NULL,
   label TYPE_EPAGELABEL,
   type TYPE_EPAGETYPE NOT NULL,  -- list, edit

@@ -13,5 +13,5 @@ chown postgres:postgres /dev/shm/postgres
 rm -f $logfile
 
 
-es 9.5.create.sp.splitstring.sql
+es 26.create-table-epage.sql
 

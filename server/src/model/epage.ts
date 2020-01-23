@@ -9,6 +9,7 @@ export interface IEPageInfo {
     name: string;
     label: string;
     type: string;
+    entity: string;
 }
 
 export interface IEPageField {
@@ -26,6 +27,7 @@ export interface IEPage {
     redirecturl: string;
     idName: string;
     fields: IEPageField[];
+    entity: string;
 }
 
 interface IEPageAction {
