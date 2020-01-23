@@ -1,6 +1,6 @@
 call TRACE('create SP UserSaveJSON');
 
-create or replace function UserSaveJSON(userDoc JSONB)
+create or replace function UserSaveJSON(doc JSONB)
 returns JSONB
 as $$
 declare
@@ -8,14 +8,14 @@ _id users.id%TYPE;
 _js JSONB;
 begin
 
-select userDoc->>'id' into _id;
+select doc->>'id' into _id;
 
-call LOGJSONADD( concat('UserSaveJSON1 id=',_id), userDoc);
+call LOGJSONADD( concat('UserSaveJSON1 id=',_id), doc);
 
 if _id is null then
-  select * from UserAddJSON(userDoc) into _js;
+  select * from UserAddJSON(doc) into _js;
 else
-  select * from UserUpdateJSON(userDoc) into _js;
+  select * from UserUpdateJSON(doc) into _js;
 end if;
 
 return _js;

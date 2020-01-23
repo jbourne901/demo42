@@ -43,7 +43,7 @@ export class EPageRepository extends Loggable {
         const queryRes = await DB.db().one<IQueryResultWithPayload<IEPage>>(query, [id]);
 
         BowLog.log3(myself, "queryRes=");
-        BowLog.dir(myself, queryRes);
+        // BowLog.dir(myself, queryRes);
         const res = queryRes.res || queryRes;
 
         if (res.result === "OK") {
@@ -60,7 +60,7 @@ export class EPageRepository extends Loggable {
         const queryRes = await DB.db().one<IQueryResultWithPayload<IEPageInfo[]>>(query);
 
         BowLog.log3(myself, "queryRes=");
-        BowLog.dir(myself, queryRes);
+        // BowLog.dir(myself, queryRes);
         const res = queryRes.res || queryRes;
 
         if (res.result === "OK") {
@@ -77,7 +77,7 @@ export class EPageRepository extends Loggable {
         const queryRes = await DB.db().one<IQueryResultWithPayload<IEPage>>(query, [id]);
 
         BowLog.log3(myself, "queryRes=");
-        BowLog.dir(myself, queryRes);
+        // BowLog.dir(myself, queryRes);
         const res = queryRes.res || queryRes;
         if (res.result === "OK") {
             const epage = res.payload;
@@ -87,7 +87,7 @@ export class EPageRepository extends Loggable {
             const queryRes2 = await DB.db().one<IQueryResultWithPayload<any[]>>(query2);
 
             BowLog.log5(myself, "queryRes2=");
-            BowLog.dir(myself, queryRes2);
+            // BowLog.dir(myself, queryRes2);
 
             const res2 = queryRes2.res || queryRes2;
 
@@ -99,16 +99,15 @@ export class EPageRepository extends Loggable {
         throw(res);
     }
 
-
     public static async entityGet(epageid: string, entityid: string) {
         const myself = this.getMyself("entityGet");
-        BowLog.log1(myself, "epageid=" + epageid + " entityid="+entityid);
+        BowLog.log1(myself, "epageid=" + epageid + " entityid=" + entityid);
 
         const query = "select * from EPageGetJSON($1) res";
         const queryRes = await DB.db().one<IQueryResultWithPayload<IEPage>>(query, [epageid]);
 
         BowLog.log3(myself, "queryRes=");
-        BowLog.dir(myself, queryRes);
+        // BowLog.dir(myself, queryRes);
         const res = queryRes.res || queryRes;
         if (res.result === "OK") {
             const epage = res.payload;
@@ -118,7 +117,7 @@ export class EPageRepository extends Loggable {
             const queryRes2 = await DB.db().one<IQueryResultWithPayload<any>>(query2, [entityid]);
 
             BowLog.log5(myself, "queryRes2=");
-            BowLog.dir(myself, queryRes2);
+            // BowLog.dir(myself, queryRes2);
 
             const res2 = queryRes2.res || queryRes2;
 
@@ -129,7 +128,6 @@ export class EPageRepository extends Loggable {
         }
         throw(res);
     }
-
 
     public static async action(epageactionid: string, params: any[], entityid?: string) {
         const myself = EPageRepository.getMyself("action");
@@ -142,12 +140,12 @@ export class EPageRepository extends Loggable {
         const queryRes = await DB.db().one<IQueryResultWithPayload<IEPageAction>>(query, [epageactionid, entid]);
 
         BowLog.log3(myself, "queryRes=");
-        BowLog.dir(myself, queryRes);
+        // BowLog.dir(myself, queryRes);
         const res = queryRes.res || queryRes;
         if (res.result === "OK") {
             const epageaction = res.payload;
             BowLog.log3(myself, "epageaction=");
-            BowLog.dir(myself, epageaction);
+            // BowLog.dir(myself, epageaction);
             if ( epageaction && epageaction.query && epageaction.query.length > 0) {
                 const query2 = "select * from " + epageaction.query + " res";
                 BowLog.log4(myself, "query2=" + query2);
@@ -155,7 +153,7 @@ export class EPageRepository extends Loggable {
                 const queryRes2 = await DB.db().one<IQueryResultWithPayload<IActionNextSteps>>(query2, params);
 
                 BowLog.log5(myself, "queryRes2=");
-                BowLog.dir(myself, queryRes2);
+                // BowLog.dir(myself, queryRes2);
 
                 const res2 = queryRes2.res || queryRes2;
 

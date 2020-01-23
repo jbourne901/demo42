@@ -1,4 +1,4 @@
-import pgPromise, { IDatabase } from "pg-promise";
+import pgPromise, { IDatabase, IConnected } from "pg-promise";
 import bluebird from "bluebird";
 import dotenv from "dotenv";
 import Loggable from "../framework/loggable";
@@ -25,5 +25,4 @@ export default class DB extends Loggable {
         BowLog.log1(myself, "DB_URL=" + DB_URL);
         this.db = pgp(DB_URL);
     }
-
 }

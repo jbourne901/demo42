@@ -2,6 +2,7 @@ import React from 'react';
 import {withRouter, RouteComponentProps} from "react-router-dom";
 import EPageIntList from "./intlist";
 import Loading from "../../loading";
+import Refresher from "../../refresher";
 
 interface IParam {
     epageid: string;
@@ -38,9 +39,17 @@ class EPageListInternal extends React.Component<IProps, IState> {
             needRefresh: false
         };
     }
+
+    public refresh() {
+        this.setState({needRefresh: false});
+    }
+
     public render() {
         if(!this.state.epageid) {
             return <Loading />
+        }
+        if(this.state.needRefresh){
+            return <Refresher refresh = { () => this.refresh() } />;
         }
         return (
             <EPageIntList epageid={this.state.epageid} />

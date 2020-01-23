@@ -12,4 +12,6 @@ chown postgres:postgres /dev/shm/postgres
 
 rm -f $logfile
 
-es 31.create.sp.epageactiongetjson.sql
+
+es 9.5.create.sp.splitstring.sql
+

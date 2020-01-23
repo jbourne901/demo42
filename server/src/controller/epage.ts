@@ -72,7 +72,7 @@ export default class EPageController extends Controller {
         const entity = req.body.entity;
         BowLog.log1(myself, "POST /api/epage/entityaction epageactionid" + epageactionid +
                             " entity=");
-        BowLog.dir(myself, entity);
+        // BowLog.dir(myself, entity);
         return EPageController.action(epageactionid, [entity], req, res, next);
     }
 

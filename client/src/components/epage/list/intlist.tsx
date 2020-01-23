@@ -92,6 +92,8 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
     }
 
     serviceListCallback(res: IEntityListResult) {
+        console.log("serviceListCallback res=");
+        console.dir(res);
         if(res.result==="OK") {
             this.setState({
                 isLoading: false,

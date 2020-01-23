@@ -206,10 +206,11 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         const fields = epage.fields;
         const error = this.state.errors.error;
         const actions = epage.pageactions;
+        const header = epage.label || "Edit";
         
         return (
             <div>
-                <h2>EPageEdit</h2>
+                <h2>{header}</h2>
                 <form onSubmit={ (e:React.FormEvent<HTMLFormElement>) =>
                                          this.onSubmit(e) 
                                }

@@ -66,62 +66,27 @@ _deleteaction JSONB;
 _saveaction JSONB;
 _cancelaction JSONB;
 _confirm epageaction.confirm%TYPE;
+_namefield JSONB;
+_usernamefield JSONB;
+_passwordfield JSONB;
+_password2field JSONB;
 begin
 
 call TRACE('1TestEPageAddJSON1');
 
-delete from epage;
 
-_fields := '[{"name": "name", "label": "Name"}, {"name": "username", "label": "Username"}]';
+--_fields := '[{"name": "name", "label": "Name"}, {"name": "username", "label": "Username"}]';
 
-_pageactions := '[]';
-_addaction := '{"name": "add", "label": "Add", "type": "redirect", "isitemaction": false, "nextpage": "useredit"}';
+--select * from StandardListFieldJSON('name', 'Name') into _namefield;
+--select * from StandardListFieldJSON('username', 'Username') into _usernamefield;
+--_fields := '[]';
+--_fields := jarraddjson(_fields, _namefield);
+--_fields := jarraddjson(_fields, _usernamefield);
 
-_pageactions := jarraddjson(_pageactions, _addaction);
+--_js:='{ "name": "useredit", "type":"edit", "label": "Edit User (EPage)", "query": "UserGetJSON($1)",  "pkname": "id" }';
+--_js:=jsetjson(_js, 'fields', _fields);
+--_js:=jsetjson(_js, 'pageactions', _pageactions);
 
-_editaction := '{"name": "edit", "label": "Edit", "type": "redirect", "isitemaction": true, "nextpage": "useredit"}';
-
-_deleteaction := '{"name": "delete", "label": "Delete", "type": "trigger", "isitemaction": true,  "query": "UserDeleteJSON($1)"}';
-_confirm = 'Are you sure you want to delete user ${name}?';
-_deleteaction = jsetstr(_deleteaction, 'confirm', _confirm);
-
-_pageactions=jarraddjson(_pageactions,  _editaction);
-_pageactions=jarraddjson(_pageactions,  _deleteaction);
-
-_js:='{ "name": "user", "type":"list", "label": "Users (EPage)", "query": "UserListJSON()",  "pkname": "id" }';
-_js:=jsetjson(_js, 'fields', _fields);
-_js:=jsetjson(_js, 'pageactions', _pageactions);
-
-
-select * from EPageAddJSON(_js) into _js;
-
-call TRACE( concat( 'TestEPageAddJSON1 ', _js) );
-
-
-_fields := '[{"name": "name", "label": "Name"}, {"name": "username", "label": "Username"}, {"name":"password", "label": "Password", "type":"password"}, {"name":"password2", "label": "Confirm password", "type":"password"}]';
-
-_pageactions := '[]';
-_saveaction := '{"name": "save", "label": "Save", "type": "trigger", "isitemaction": false, "query": "UserSaveJSON($1)", "nextpage": "user"}';
-
-_confirm := 'Are you sure? All changes will be lost';
-_cancelaction :=  '{"name": "cancel", "label": "Cancel", "type": "redirect", "isitemaction": false, "nextpage": "user"}';
-_cancelaction = jsetstr(_cancelaction, 'confirm', _confirm);
-
-_pageactions := jarraddjson(_pageactions, _saveaction);
-_pageactions := jarraddjson(_pageactions, _cancelaction);
-
-
-_js:='{ "name": "useredit", "type":"edit", "label": "Edit User (EPage)", "query": "UserGetJSON($1)",  "pkname": "id" }';
-_js:=jsetjson(_js, 'fields', _fields);
-_js:=jsetjson(_js, 'pageactions', _pageactions);
-
-select * from EPageAddJSON(_js) into _js;
-
-call TRACE( concat( 'TestEPageAddJSON2 ', _js) );
-
-
-
-call TRACE( concat( '1TestEPageAddJSON ', _js) );
 
 end
 $$

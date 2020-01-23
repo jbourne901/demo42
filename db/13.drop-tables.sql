@@ -1,6 +1,8 @@
 call TRACE('drop tables ');
 
 drop table if exists users;
+drop table if exists queue;
+
 
 drop table if exists epageaction;
 drop table if exists epagefield;
