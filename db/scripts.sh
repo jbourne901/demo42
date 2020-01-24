@@ -29,7 +29,7 @@ checkErr() {
      rm -f /tmp/$1
      exit 1
   fi
-  grep -i error $logfile |egrep -v "unknown err" |egrep -v errors
+  grep -i error $logfile |egrep -v "unknown err" |egrep -v errors |egrep -v error_
   if [ $? -eq 1 ]; then
      rm -f /tmp/$1
   else

@@ -11,11 +11,12 @@ import { IEPageService, IEPageListResult } from "../../service/epage";
 import Service from "../../service";
 import EPageList from "../epage/list";
 import EPageEdit from "../epage/edit";
+import { IAuthService } from "../../service/auth";
+import Language from "../language";
+import { CancelTokenSource } from "axios";
 
 interface IProps extends RouteComponentProps {
     onLogout(): void;
-    isLoggedIn: boolean;
-    authName: string;
 }
 
 interface IState {
@@ -24,11 +25,15 @@ interface IState {
 }
 
 class PageManagerInternal extends React.Component<IProps, IState> {
-    svc: IEPageService;
+    epageSvc: IEPageService;
+    epageListCancel?: CancelTokenSource;
+    authSvc: IAuthService;
 
     constructor(props: IProps) {
         super(props);
-        this.svc = Service.epage();
+        console.log("PageManager");
+        this.epageSvc = Service.epage();
+        this.authSvc = Service.auth();
         this.state = {
             isLoading: false,
             pages: []
@@ -45,21 +50,29 @@ class PageManagerInternal extends React.Component<IProps, IState> {
     }
 
     startLoading() {
+        console.log("PageManager - startLoading");
         this.setState({isLoading: true});
     }
 
     stopLoading() {
+        console.log("PageManager - stopLoading");
         this.setState({isLoading: false});
     }
 
     refreshPages() {
         this.startLoading();
-        this.svc.epageList()
-            .then( (res: IEPageListResult) => this.serviceGetCallback(res) )
-            .catch( (err:any) => this.serviceGetError(err) );
+        const cancellablePromise = this.epageSvc.epageList();
+        cancellablePromise.promise
+                          .then( (res: IEPageListResult) => this.serviceGetCallback(res) )
+                          .catch( (err:any) => this.serviceGetError(err) );
+        if(this.epageListCancel) {
+            this.epageListCancel.cancel();
+        }
+        this.epageListCancel = cancellablePromise.cancelControl;
     }
 
     serviceGetCallback(res: IEPageListResult) {
+        console.log("PageManager - serviceGetCallback");
         if(res.result === "OK") {
             this.setState({isLoading: false, pages: res.payload});
             return;
@@ -68,6 +81,11 @@ class PageManagerInternal extends React.Component<IProps, IState> {
     }
 
     serviceGetError(err: any) {
+        console.error("PageManager - serviceGetError err="+err.toString());
+        console.dir(err);
+        if(err.toString()==="Cancel") {            
+            return;
+        }
         this.stopLoading();
     }
 
@@ -81,15 +99,22 @@ class PageManagerInternal extends React.Component<IProps, IState> {
         );
     }
 
+    public componentWillUnmount() {
+        console.log("PageManager - componentWillUnmount");
+        if(this.epageListCancel) {
+            this.epageListCancel.cancel();
+        }
+    }
+
     public render() {
         console.log("PageManager - render()");
-        const isLoggedIn = this.props.isLoggedIn;
+        const isLoggedIn = this.authSvc.isLoggedIn();
         console.log("PageManager.render - isLoggedIn="+isLoggedIn);
         if(!isLoggedIn ) {
             return <Redirect to="/" />;
         }
         console.dir(this.props);
-        const authName = this.props.authName || "";
+        const authName = this.authSvc.getAuthName() || "";
         const logoutMsg = "Logged in as: " + authName;
         const pages = this.state.pages || [];
         const listpages = pages.filter( (p) => p.type === "list" );
@@ -112,6 +137,7 @@ class PageManagerInternal extends React.Component<IProps, IState> {
                       {listpages.map( (p: IEPageInfo) => this.formatPage(p) )}
                       </ul>                      
                       <ul className="nav navbar-nav navbar-right">
+                        <Language />
                         <li className="nav-item">
                            <a href="/#">
                                <span>{logoutMsg}</span>
@@ -129,28 +155,28 @@ class PageManagerInternal extends React.Component<IProps, IState> {
                    </div>
                 </nav>
                 <Switch>
-                   <PrivateRoute exact path="/users" isLoggedIn={isLoggedIn}>
+                   <PrivateRoute exact path="/users">
                       <UserList />
                    </PrivateRoute>
-                   <PrivateRoute exact path="/users/add" isLoggedIn={isLoggedIn}>
+                   <PrivateRoute exact path="/users/add">
                       <UserEdit />
                    </PrivateRoute>
-                   <PrivateRoute exact path="/users/:id" isLoggedIn={isLoggedIn}>
+                   <PrivateRoute exact path="/users/:id">
                       <UserEdit />
                    </PrivateRoute>
-                   <PrivateRoute exact path="/campaigns" isLoggedIn={isLoggedIn}>
+                   <PrivateRoute exact path="/campaigns">
                       <CampaignList />
                    </PrivateRoute>
-                   <PrivateRoute exact path="/epage/:epageid/list" isLoggedIn={isLoggedIn}>
+                   <PrivateRoute exact path="/epage/:epageid/list">
                       <EPageList />
                    </PrivateRoute>
-                   <PrivateRoute exact path="/epage/:epageid/edit/:entityid" isLoggedIn={isLoggedIn}>
+                   <PrivateRoute exact path="/epage/:epageid/edit/:entityid">
                       <EPageEdit />
                    </PrivateRoute>
-                   <PrivateRoute exact path="/epage/:epageid/edit" isLoggedIn={isLoggedIn}>
+                   <PrivateRoute exact path="/epage/:epageid/edit">
                       <EPageEdit />
                    </PrivateRoute>
-                   <PrivateRoute isLoggedIn={isLoggedIn}>
+                   <PrivateRoute>
                        <LandingPage />
                    </PrivateRoute>
                 </Switch>

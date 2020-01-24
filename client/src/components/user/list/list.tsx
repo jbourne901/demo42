@@ -7,6 +7,7 @@ import {IUserService, IUserListResult} from '../../../service/user';
 import {IServiceResult} from "../../../service/service-result";
 import Loading from "../../loading";
 import "./list.css";
+import { CancelTokenSource } from "axios";
 
 interface IProps extends RouteComponentProps {
 }
@@ -18,6 +19,8 @@ interface IState {
 
 class UserListInternal extends React.Component<IProps, IState> {
     private readonly svc: IUserService;
+    private listCancel?: CancelTokenSource;
+    private deleteCancel?: CancelTokenSource;
 
     constructor(props: IProps) {
         super(props);
@@ -42,9 +45,14 @@ class UserListInternal extends React.Component<IProps, IState> {
 
     refreshList() {
         this.startLoading();
-        this.svc.userList()
-            .then( (res: IUserListResult) => this.serviceListResult(res) )
-            .catch( (err: any) => this.serviceError(err) );
+        const cancellablePromise = this.svc.userList();
+        cancellablePromise.promise
+                          .then( (res: IUserListResult) => this.serviceListResult(res) )
+                          .catch( (err: any) => this.serviceError(err) );
+        if(this.listCancel) {
+            this.listCancel.cancel();
+        }
+        this.listCancel = cancellablePromise.cancelControl;
     }
 
     serviceListResult(res: IUserListResult) {
@@ -68,9 +76,14 @@ class UserListInternal extends React.Component<IProps, IState> {
     onDelete(u: IUserInfo) {
         if(window.confirm(`You sure you want to delete user ${u.name}?`)) {
             this.startLoading();
-            this.svc.userDelete(u.id)
-                    .then( (res: IServiceResult) => this.serviceDeleteResult(res))
-                    .catch( (err: any) => this.serviceError(err) );
+            const cancellablePromise = this.svc.userDelete(u.id);
+            cancellablePromise.promise
+                              .then( (res: IServiceResult) => this.serviceDeleteResult(res))
+                              .catch( (err: any) => this.serviceError(err) );
+            if(this.deleteCancel) {
+                this.deleteCancel.cancel();
+            }
+            this.deleteCancel = cancellablePromise.cancelControl;
         }
     }
 
@@ -90,12 +103,21 @@ class UserListInternal extends React.Component<IProps, IState> {
             <tr key={u.id}>
                 <td>{u.name}</td>
                 <td>{u.username}</td>
-                <td>
+                <th className="centered">
                     <button type="button" onClick={ () => this.onEdit(u)}>Edit</button>
                     <button type="button" onClick={ () => this.onDelete(u)}>Delete</button>
-                </td>
+                </th>
             </tr>
         )
+    }
+
+    public componentWillUnmount() {
+        if(this.listCancel) {
+            this.listCancel.cancel();
+        }
+        if(this.deleteCancel) {
+            this.deleteCancel.cancel();
+        }
     }
 
     public render() {
@@ -104,18 +126,18 @@ class UserListInternal extends React.Component<IProps, IState> {
             return <Loading />;
         }
         return (
-           <div>
+           <div className="container">
               <h2>User List</h2>
               <div>
                   <button onClick={ () => this.onAdd() }>Add</button>
               </div>
               <hr />
-              <table className="user-list-table">
-                  <thead>
+              <table className="table table-bordered table-responsive user-list-table">
+                  <thead className="thead">
                       <tr>
-                          <td>Name</td>
-                          <td>Username</td>
-                          <td>Actions</td>
+                          <th className="col-md-2">Name</th>
+                          <th className="col-md-2">Username</th>
+                          <th className="col-md-1 centered">Actions</th>
                       </tr>
                   </thead>
                   <tbody>

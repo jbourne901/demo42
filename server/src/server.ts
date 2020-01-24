@@ -9,6 +9,7 @@ import BowLog from "./framework/bow-log";
 import UserRouter from "./routes/user";
 import AuthRouter from "./routes/auth";
 import EPageRouter from "./routes/epage";
+import LocalizationRouter from "./routes/localization";
 
 class App extends Loggable {
 
@@ -38,6 +39,7 @@ class App extends Loggable {
     app.use("/api/user", UserRouter.getRouter());
     app.use("/api/auth", AuthRouter.getRouter());
     app.use("/api/epage", EPageRouter.getRouter());
+    app.use("/api/localization", LocalizationRouter.getRouter());
 
     const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
                             BowLog.log1(myself, "notFoundHandler");

@@ -13,5 +13,5 @@ chown postgres:postgres /dev/shm/postgres
 rm -f $logfile
 
 
-es 26.create-table-epage.sql
+es 13.0.7.create.sp.localizationadd2json.sql
 

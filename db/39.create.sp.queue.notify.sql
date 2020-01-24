@@ -19,8 +19,6 @@ begin
 
 call TRACE('TestQueueNotify');
 
-delete from queue;
-
 LISTEN datachange;
 
 call TRACE('TestQueueNotify1 - adding');
@@ -28,7 +26,7 @@ call TRACE('TestQueueNotify1 - adding');
 insert into queue(name)
 select 'testqueue8';
 
-delete from queue;
+delete from queue where name='testqueue8';
 
 
 

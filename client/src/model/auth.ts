@@ -5,3 +5,7 @@ export interface IAuthInfo {
 export interface IAuth {
     name: string;
 };
+
+export const AuthInfoDefault : IAuthInfo = {
+   token: ""
+};

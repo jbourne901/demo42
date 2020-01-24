@@ -45,9 +45,9 @@ class EPageListItemInternal extends React.Component<IProps> {
         return (
             <tr>
             {fields.map( (field) => this.formatEntityCell(field) )}
-            <td>
-            {itemactions.map( (a: IEPageAction) => this.formatItemAction(a) )}
-            </td>
+               <th>
+                  {itemactions.map( (a: IEPageAction) => this.formatItemAction(a) )}
+               </th>
             </tr>
         );
     }

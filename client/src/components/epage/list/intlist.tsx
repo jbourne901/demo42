@@ -8,14 +8,14 @@ import {IEPage, IEPageField, IEPageAction} from '../../../model/epage';
 import EPageListItem from "./list-item";
 import "./intlist.css";
 import insertVars from '../../../framework/insert-vars';
-import withUniqueid from "../../with-uniqueid";
+import {withUniqueId, IUniqueId} from "../../uniqueid";
+import { CancelTokenSource } from 'axios';
 
 interface IParam {
     id: string;
 }
-interface IProps extends RouteComponentProps {
+interface IProps extends RouteComponentProps, IUniqueId {
     epageid: string;
-    uniqueid: string;
 }
 
 interface IState {
@@ -26,6 +26,10 @@ interface IState {
 
 class EPageIntListInternal extends React.Component<IProps, IState> {
     private svc: IEPageService;
+    private epageGetCancel?: CancelTokenSource;
+    private entityListCancel?: CancelTokenSource;
+    private generalActionCancel?: CancelTokenSource;
+    private itemActionCancel?: CancelTokenSource;
     private notification: INotificationService;
 
     public componentDidMount() {
@@ -50,19 +54,26 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
         this.startLoading();
         const epageid = this.props.epageid;
         if(epageid && epageid.length>0) {
-            this.svc.epageGet(epageid)
-                .then( (res: IEPageGetResult) => this.serviceGetCallback(res))
-                .catch( (err) => this.serviceGetError(err));
+            const cancellablePromise = this.svc.epageGet(epageid);
+            cancellablePromise.promise
+                              .then( (res: IEPageGetResult) => this.serviceGetCallback(res))
+                              .catch( (err) => this.serviceGetError(err));
+            if(this.epageGetCancel) {
+                this.epageGetCancel.cancel();
+            }
+            this.epageGetCancel = cancellablePromise.cancelControl;
         }
     }
 
     startLoading() {
+        console.log("EPageIntList - startLoading");
         this.setState({
             isLoading: true
         });
     }
 
     stopLoading() {
+        console.log("EPageIntList - stopLoading");
         this.setState({
             isLoading: false
         });
@@ -91,9 +102,14 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
         const epage = this.state.epage;        
         if(epage) {
             const epageid = epage.id;
-            this.svc.entityList(epageid)
-                .then( (res: IEntityListResult) => this.serviceListCallback(res) )
-                .catch( (err: any) => this.serviceListError(err));
+            const cancellablePromise = this.svc.entityList(epageid);
+            cancellablePromise.promise
+                              .then( (res: IEntityListResult) => this.serviceListCallback(res) )
+                              .catch( (err: any) => this.serviceListError(err));
+            if(this.entityListCancel) {
+                this.entityListCancel.cancel();
+            }
+            this.entityListCancel = cancellablePromise.cancelControl;
         }
     }
 
@@ -118,9 +134,9 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
 
     protected formatHeader(c: IEPageField) {
         return (
-            <td key={c.name}>
+            <th className="col-md-2" key={c.name}>
                {c.label}
-            </td>
+            </th>
         );        
     }
 
@@ -137,9 +153,14 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
             }
         }
         this.startLoading();
-        this.svc.generalAction(pa.id)
-                .then( (res: IActionResult) => this.actionCallback(res) )
-                .catch( (err: any) => this.actionError(err) );    
+        const cancellablePromise = this.svc.generalAction(pa.id);
+        cancellablePromise.promise
+                          .then( (res: IActionResult) => this.actionCallback(res) )
+                          .catch( (err: any) => this.actionError(err) );    
+        if(this.generalActionCancel) {
+            this.generalActionCancel.cancel();
+        }
+        this.generalActionCancel = cancellablePromise.cancelControl;
     }
 
     protected actionCallback(res: IActionResult) {
@@ -183,9 +204,14 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
                     }
                 }
                 this.startLoading();
-                return this.svc.itemAction( epageactionid, entityid )        
-                            .then( (res) => this.actionCallback(res) )
-                            .catch( (err) => this.actionError(err) );
+                const cancellablePromise = this.svc.itemAction( epageactionid, entityid );
+                cancellablePromise.promise
+                                  .then( (res) => this.actionCallback(res) )
+                                  .catch( (err) => this.actionError(err) );
+                if(this.itemActionCancel) {
+                    this.itemActionCancel.cancel();
+                }
+                this.itemActionCancel = cancellablePromise.cancelControl;
             }
         }
         console.error("onItemAction - unable to determine epageactionid or entityid");
@@ -208,7 +234,20 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
     }
 
     public componentWillUnmount() {
+        console.log("EPageIntList - componentWillUnmount");
         this.notification.unregister(this.props.uniqueid);
+        if(this.epageGetCancel) {
+            this.epageGetCancel.cancel();
+        }
+        if(this.entityListCancel) {
+            this.entityListCancel.cancel();
+        }
+        if(this.generalActionCancel) {
+            this.generalActionCancel.cancel();
+        }
+        if(this.itemActionCancel) {
+            this.itemActionCancel.cancel();
+        }
     }
 
     public render() {
@@ -233,16 +272,16 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
         console.dir(pageactions);
 
         return (
-            <div>
+            <div className="container">
                 <h2>{label}</h2>
                 <hr/>
                 {generalactions.map( (pa: IEPageAction) => this.formatGeneralAction(pa) )}
                 <hr/>
-                <table className="intlist-table">
+                <table className="table table-bordered table-responsive intlist-table">
                     <thead>
                         <tr>
                             {fields.map( (c) => this.formatHeader(c))}
-                            <td>Actions</td>
+                            <th className="col-md-1">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -254,7 +293,7 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
     }    
 }
 
-const tmp = withUniqueid(EPageIntListInternal)
+const tmp = withUniqueId(EPageIntListInternal)
 const EPageIntList = withRouter(tmp);
 
 export default EPageIntList;

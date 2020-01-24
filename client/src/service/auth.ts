@@ -1,17 +1,17 @@
 import {IAuthInfo} from "../model/auth";
 import {ILogin} from "../model/login";
 import { IServiceResultWithPayload, IServiceResult } from "./service-result";
-import axios, {AxiosResponse} from "axios";
 import extractSvcData from "./extract-svc-data";
 import jwt from "jsonwebtoken";
+import Transport, {ICancellableTransportPromise} from "../framework/transport";
 
 export type IAuthInfoServiceResult = IServiceResultWithPayload<IAuthInfo>;
 
 export interface IAuthService  {
-   login(login: ILogin): Promise<IAuthInfoServiceResult>;
+   login(login: ILogin): ICancellableTransportPromise<IServiceResult>;
    isLoggedIn(): boolean;
    getAuthName(): string;
-   logout(): Promise<IServiceResult>;
+   logout(): IServiceResult;
 }
 
 export class AuthService implements IAuthService {
@@ -20,32 +20,37 @@ export class AuthService implements IAuthService {
         this.BASE_URL=process.env.REACT_APP_API_URL + "/auth";
     }
 
-    public login(login: ILogin) {
+    public login(login: ILogin): ICancellableTransportPromise<IServiceResult> {
         const url = this.BASE_URL+"/login";
         console.log("Authservice.login url="+url);
         console.dir(login);
-        return axios.post<IAuthInfoServiceResult>(url, {login})
-                    .then( (res) => this.processAuthResult(res) )
-                    .catch( (err) => this.processLoginError(err) );
+        //return axios.post<IAuthInfoServiceResult>(url, {login})
+        const cancellablePromise = Transport.post<IAuthInfoServiceResult>(url, {login});
+        const promise = cancellablePromise.promise
+                                          .then( (res) => this.processAuthResult(res) )
+                                          .catch( (err) => this.processLoginError(err) );
+        const cancellablePromise2: ICancellableTransportPromise<IServiceResult> = 
+                          {cancelControl: cancellablePromise.cancelControl, promise};
+        return cancellablePromise2;
     }
 
-    protected processLoginError(resp: any) {
+    protected processLoginError(resp: any): IServiceResult {
         console.log("processLoginError resp=");
         console.dir(resp);
+        let res: IServiceResult;
         if(resp && resp.response && resp.response.data) {
             console.log("extracting response from resp");
-            const res =  extractSvcData<IServiceResult>(resp.response);
+            res =  extractSvcData<IServiceResult>(resp.response);
             console.dir(res);
-            return res;
+            throw(res);
         }
-        return resp;
+        throw(resp);
     }
 
-    processAuthResult(res: AxiosResponse<IAuthInfoServiceResult>) {
-        console.log("processAuthResult res=");
-        console.dir(res);
+    processAuthResult(authRes: IAuthInfoServiceResult) {
+        console.log("processAuthResult authRes=");
+        console.dir(authRes);
 
-        const authRes = extractSvcData<IAuthInfoServiceResult>(res);
         console.log("processAuthResult authRes=");
         console.dir(authRes);
 
@@ -65,7 +70,11 @@ export class AuthService implements IAuthService {
                 window.localStorage.setItem("authName", authName);
             }            
         }
-        return authRes;
+        const svcResult: IServiceResult = {
+            result: authRes.result || "Error",
+            errors: authRes.errors || {}
+        };
+        return svcResult;
     }
 
     public isLoggedIn(): boolean {
@@ -76,7 +85,7 @@ export class AuthService implements IAuthService {
         return window.localStorage.getItem("authName") || "";
     }
 
-    public async logout() {
+    public logout() {
         window.localStorage.removeItem("authName");
         window.localStorage.removeItem("isLoggedIn");
         const res: IServiceResult = {result: "OK", errors: {} };

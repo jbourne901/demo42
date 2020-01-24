@@ -9,5 +9,7 @@ create domain TYPE_ORDNO AS INT NOT NULL;
 drop domain if exists TYPE_LOCALIZEDLABEL;
 create DOMAIN TYPE_LOCALIZEDLABEL varchar(500);
 
+drop domain if exists TYPE_LANGUAGE;
+create DOMAIN TYPE_LANGUAGE varchar(2);
 
 

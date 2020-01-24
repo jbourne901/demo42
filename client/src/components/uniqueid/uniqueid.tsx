@@ -1,7 +1,11 @@
 import React from 'react';
 import shortid from "shortid";
 
-const withUniqueid = (WrappedComponent: any) => (props: any) => {
+export interface IUniqueId {
+    uniqueid: string;
+}
+
+export const withUniqueId = (WrappedComponent: any) => (props: any) => {
     const uniqueid = shortid.generate();
     const p = {...props, uniqueid};
     return (
@@ -9,4 +13,3 @@ const withUniqueid = (WrappedComponent: any) => (props: any) => {
     );
 }
 
-export default withUniqueid;

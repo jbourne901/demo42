@@ -16,8 +16,10 @@ const EditField: React.FC<IProps> = (props: IProps) => {
 
     return (
         <div className="form-group">
-            <label>{label}</label>
-            <input type={type} name={name} value={value} onChange={onChange} />
+            <label>{label}: </label>
+            <input type={type} name={name} value={value} onChange={onChange} 
+               className="form-control"
+            />
             <ValidationError name={name} error={error} />
         </div>
         

@@ -49,6 +49,18 @@ es 13.drop-tables.sql
 
 es 13.0.1.create.table.entitytable.sql
 es 13.0.2.create.sp.entityregister.sql
+es 13.0.2.1.create.table.language.sql
+es 13.0.2.2.create.sp.languagefill.sql
+es 13.0.2.3.create.sp.languagelist.sql
+es 13.0.2.4.create.sp.languagelistalljson.sql
+
+
+es 13.0.3.create-table-localization.sql
+es 13.0.4.create.sp.localizationlistjson.sql
+es 13.0.5.create.sp.localizationaddjson.sql
+es 13.0.7.create.sp.localizationadd2.sql
+
+
 
 es 13.1.create.sp.eventnotify.sql
 es 13.2.create.sp.eventlistenjson.sql
@@ -100,4 +112,7 @@ es 36.create.sp.queueaddjson.sql
 es 37.create.sp.queuedeletejson.sql
 es 38.create.sp.queuesavejson.sql
 es 39.create.sp.queue.notify.sql
+
+es 40.create.sp.localizationfill.sql
+es 41.create.sp.localizationlistalljson.sql
 

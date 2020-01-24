@@ -8,6 +8,7 @@ import Loading from "../../loading";
 import { IServiceResult } from '../../../service/service-result';
 import ValidationError from "../../validation-error";
 import EditField from '../../edit-field';
+import { CancelTokenSource } from 'axios';
 
 interface IParams {
    id: string;
@@ -26,6 +27,8 @@ interface IState {
 
 class UserEditInternal extends React.Component<IProps, IState> {
     svc: IUserService;
+    getCancel?: CancelTokenSource;
+    saveCancel?: CancelTokenSource;
     constructor(props: IProps) {
         super(props);
         this.state = {
@@ -44,9 +47,14 @@ class UserEditInternal extends React.Component<IProps, IState> {
         if (id && id.length>0 && id !== "add") {
             console.log("componentDidMount id = "+id);
             this.startGetting();
-            this.svc.userGet(id)
-                .then( (res: IUserGetResult) => this.serviceGetCallback(res))
-                .catch( (err: any) => this.serviceGetError(err))
+            const cancellablePromise = this.svc.userGet(id);
+            cancellablePromise.promise
+                              .then( (res: IUserGetResult) => this.serviceGetCallback(res))
+                              .catch( (err: any) => this.serviceGetError(err))
+            if(this.getCancel) {
+                this.getCancel.cancel();
+            }
+            this.getCancel = cancellablePromise.cancelControl;
         }
     }
 
@@ -141,9 +149,14 @@ class UserEditInternal extends React.Component<IProps, IState> {
         const user = this.state.user || UserDefault;
         if(user) {
             console.dir(user);
-            this.svc.userSave(user)
-                .then( (res: IServiceResult) => this.serviceSaveCallback(res))
-                .catch( (err: any) => this.serviceSaveError(err));
+            const cancellablePromise = this.svc.userSave(user);
+            cancellablePromise.promise
+                              .then( (res: IServiceResult) => this.serviceSaveCallback(res))
+                              .catch( (err: any) => this.serviceSaveError(err));
+            if(this.saveCancel) {
+                this.saveCancel.cancel();
+            }
+            this.saveCancel = cancellablePromise.cancelControl;
         }
     }
 
@@ -164,6 +177,16 @@ class UserEditInternal extends React.Component<IProps, IState> {
                                errors: {error},
                                isSaving: false
                             });
+    }
+
+    public componentWillUnmount() {
+        if(this.getCancel) {
+            this.getCancel.cancel();
+        }
+        if(this.saveCancel) {
+            this.saveCancel.cancel();
+        }
+
     }
 
     public render() {

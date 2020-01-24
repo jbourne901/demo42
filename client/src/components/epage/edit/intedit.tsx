@@ -7,6 +7,7 @@ import EditField from "../../edit-field";
 import ValidationError from "../../validation-error";
 import { IEPageService, IEPageGetResult, IEntityGetResult, IActionResult } from '../../../service/epage';
 import Service from '../../../service';
+import {CancelTokenSource} from "axios";
 
 interface IProps extends RouteComponentProps {
     epageid: string;
@@ -24,6 +25,10 @@ interface IState {
 class EPageIntEditInternal extends React.Component<IProps, IState> {
 
     private svc: IEPageService;
+    private epageGetCancel?: CancelTokenSource;
+    private entityGetCancel?: CancelTokenSource;
+    private pageActionCancel?: CancelTokenSource;
+
     constructor(props: IProps) {
         super(props);
         console.log("EPageIntEdit - constructor");
@@ -53,9 +58,14 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         const epageid = this.props.epageid;
         console.log("EPageIntEdit - componentDidMount epageid="+epageid);
         this.startLoading();
-        this.svc.epageGet(epageid)
-                .then( (res) => this.epageGetCallback(res) )
-                .catch( (err) => this.serviceError(err) );
+        const cancellablePromise = this.svc.epageGet(epageid);
+        cancellablePromise.promise
+            .then( (res) => this.epageGetCallback(res) )
+            .catch( (err) => this.serviceError(err) );
+        if(this.epageGetCancel) {
+            this.epageGetCancel.cancel();
+        }
+        this.epageGetCancel = cancellablePromise.cancelControl;
     }
 
     protected serviceError(err: any) {
@@ -72,9 +82,14 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
             const epage = res.payload;
             if(entityid) {
                 this.setState({ epage: {...epage} });
-                this.svc.entityGet(epage.id, entityid)
-                        .then( (res) => this.entityGetCallback(res) )
-                        .catch( (err: any) => this.serviceError(err) );
+                const cancellablePromise = this.svc.entityGet(epage.id, entityid)
+                cancellablePromise.promise
+                                  .then( (res) => this.entityGetCallback(res) )
+                                  .catch( (err: any) => this.serviceError(err) );
+                if(this.entityGetCancel) {
+                    this.entityGetCancel.cancel();
+                }
+                this.entityGetCancel = cancellablePromise.cancelControl;
             } else {
                 console.log("epageGetCallback - entityid is blank - new entity - setting to defaults");
                 this.setState({
@@ -155,9 +170,14 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         console.log("entity=");
         console.log(entity);
         this.startLoading();
-        this.svc.entityAction(a.id, entity)
-            .then( (res) => this.actionCallback(res) )
-            .catch( (err) => this.actionErrors(err) );
+        const cancellablePromise = this.svc.entityAction(a.id, entity);
+        cancellablePromise.promise
+                          .then( (res) => this.actionCallback(res) )
+                          .catch( (err) => this.actionErrors(err) );
+        if(this.pageActionCancel) {
+            this.pageActionCancel.cancel();
+        }
+        this.pageActionCancel = cancellablePromise.cancelControl;
     }
 
     protected actionCallback(res: IActionResult) {
@@ -193,6 +213,18 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         this.stopLoading();        
     }
 
+    public componentWillUnmount() {
+        if(this.epageGetCancel) {
+            this.epageGetCancel.cancel();
+        }
+        if(this.entityGetCancel) {
+            this.entityGetCancel.cancel();
+        }
+        if(this.pageActionCancel) {
+            this.pageActionCancel.cancel();
+        }
+    }
+
     public render() {
         console.log("EPageIntEdit render");
         if(this.state.isLoading) {
@@ -209,7 +241,7 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         const header = epage.label || "Edit";
         
         return (
-            <div>
+            <div className="container">
                 <h2>{header}</h2>
                 <form onSubmit={ (e:React.FormEvent<HTMLFormElement>) =>
                                          this.onSubmit(e) 

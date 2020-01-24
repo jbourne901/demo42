@@ -1,8 +1,7 @@
 import {IEPage, IEPageInfo} from "../model/epage";
-import axios from "axios";
-import extractSvcData from "./extract-svc-data";
 import {IServiceResultWithPayload} from "./service-result";
 import IActionNextSteps from "../model/actionnextsteps";
+import Transport, { ICancellableTransportPromise } from "../framework/transport";
 
 export type IEPageListResult = IServiceResultWithPayload<IEPageInfo[]>;
 export type IEPageGetResult = IServiceResultWithPayload<IEPage>;
@@ -13,13 +12,13 @@ export type IActionResult = IServiceResultWithPayload<IActionNextSteps>;
 
 
 export interface IEPageService {
-    epageList(): Promise<IEPageListResult>;
-    epageGet(epageid: string): Promise<IEPageGetResult>;
-    entityList(epageid: string): Promise<IEntityListResult>;
-    entityGet(epageid: string, entityid: string): Promise<IEntityGetResult>;
-    generalAction(epageactionid: string): Promise<IActionResult>;
-    itemAction(epageactionid: string, entityid: string): Promise<IActionResult>;
-    entityAction(epageactionid: string, entity: any): Promise<IActionResult>;
+    epageList(): ICancellableTransportPromise<IEPageListResult>;
+    epageGet(epageid: string): ICancellableTransportPromise<IEPageGetResult>;
+    entityList(epageid: string): ICancellableTransportPromise<IEntityListResult>;
+    entityGet(epageid: string, entityid: string): ICancellableTransportPromise<IEntityGetResult>;
+    generalAction(epageactionid: string): ICancellableTransportPromise<IActionResult>;
+    itemAction(epageactionid: string, entityid: string): ICancellableTransportPromise<IActionResult>;
+    entityAction(epageactionid: string, entity: any): ICancellableTransportPromise<IActionResult>;
 }
 
 export class EPageService implements IEPageService {
@@ -28,52 +27,52 @@ export class EPageService implements IEPageService {
         this.BASE_URL=process.env.REACT_APP_API_URL + "/epage";
     }
     
-    public epageList(): Promise<IEPageListResult> {
+    public epageList(): ICancellableTransportPromise<IEPageListResult> {
         const url = this.BASE_URL+"/list";
         console.log("epageList url="+url);
-        return axios.post<IEPageListResult>(url)
-                    .then( (res) => extractSvcData<IEPageListResult>(res) );
+        //return axios.post<IEPageListResult>(url)
+        return Transport.post<IEPageListResult>(url, {});
     }
 
-    public epageGet(epageid: string) : Promise<IEPageGetResult> {
+    public epageGet(epageid: string) : ICancellableTransportPromise<IEPageGetResult> {
         const url = this.BASE_URL+"/get";
         console.log("epageGet url="+url+" epageid=" + epageid);
-        return axios.post<IEPageGetResult>(url,{id: epageid})
-                    .then( (res) => extractSvcData<IEPageGetResult>(res) );                                        
+        //return axios.post<IEPageGetResult>(url,{id: epageid})
+        return Transport.post<IEPageGetResult>(url,{id: epageid});
     }
 
-    public entityList(epageid: string) : Promise<IEntityListResult> {
+    public entityList(epageid: string) : ICancellableTransportPromise<IEntityListResult> {
         const url = this.BASE_URL+"/entitylist";
         console.log("entityList url="+url+" epageid=" + epageid);
-        return axios.post<IEntityListResult>(url,{id: epageid})
-                    .then( (res) => extractSvcData<IEntityListResult>(res) );
+        //return axios.post<IEntityListResult>(url,{id: epageid})
+        return Transport.post<IEntityListResult>(url,{id: epageid});
     }
 
-    public entityGet(epageid: string, entityid: string) {
+    public entityGet(epageid: string, entityid: string): ICancellableTransportPromise<IEntityGetResult> {
         const url = this.BASE_URL+"/entityget";
         console.log("entityGet url="+url+" epageid=" + epageid + " entityid=" + entityid);
-        return axios.post<IEntityListResult>(url,{id: epageid, entityid})
-                    .then( (res) => extractSvcData<IEntityGetResult>(res) );
+        //return axios.post<IEntityGetResult>(url,{id: epageid, entityid})
+        return Transport.post<IEntityGetResult>(url,{id: epageid, entityid});
     }
 
-    public generalAction(epageactionid: string): Promise<IActionResult> {
+    public generalAction(epageactionid: string): ICancellableTransportPromise<IActionResult> {
         const url = this.BASE_URL+"/generalaction";
-        console.log("generalAction url="+url+" epageactionid=" + epageactionid);
-        return axios.post<IActionResult>(url,{id: epageactionid})
-                    .then( (res) => extractSvcData<IActionResult>(res) );
+        console.log("generalAction url="+url+" epageactionid=" + epageactionid);        
+        //return axios.post<IActionResult>(url,{id: epageactionid})
+        return Transport.post<IActionResult>(url,{id: epageactionid});
     }
 
-    public itemAction(epageactionid: string, entityid: string): Promise<IActionResult> {
+    public itemAction(epageactionid: string, entityid: string): ICancellableTransportPromise<IActionResult> {
         const url = this.BASE_URL+"/itemaction";
-        console.log("itemAction url=" + url + " epageactionid=" + epageactionid + " entityid=" + entityid);
-        return axios.post<IActionResult>(url,{id: epageactionid, entityid})
-                    .then( (res) => extractSvcData<IActionResult>(res) );
+        console.log("itemAction url=" + url + " epageactionid=" + epageactionid + " entityid=" + entityid);        
+        //return axios.post<IActionResult>(url,{id: epageactionid, entityid})
+        return Transport.post<IActionResult>(url,{id: epageactionid, entityid});
     }
 
-    public entityAction(epageactionid: string, entity: any): Promise<IActionResult> {
+    public entityAction(epageactionid: string, entity: any): ICancellableTransportPromise<IActionResult> {
         const url = this.BASE_URL+"/entityaction";
         console.log("entityAction url=" + url + " epageactionid=" + epageactionid + " entity=" + entity);
-        return axios.post<IActionResult>(url,{id: epageactionid, entity})
-                    .then( (res) => extractSvcData<IActionResult>(res) );
+        //return axios.post<IActionResult>(url,{id: epageactionid, entity})
+        return Transport.post<IActionResult>(url,{id: epageactionid, entity});
     }    
 }

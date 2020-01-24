@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, BrowserRouter, Route,  Redirect } from "react-router-dom";
+import { Switch, BrowserRouter, Route,  RouteComponentProps, withRouter } from "react-router-dom";
 
 import PageManager from "../page-manager";
 import PrivateRoute from "../private-route";
@@ -7,13 +7,12 @@ import Login from "../login";
 import Service from "../../service";
 import { IAuthService } from "../../service/auth";
 
-interface IProps {
+interface IProps extends RouteComponentProps {
 
 }
 
 interface IState {
     isLoggedIn: boolean;
-    authName?: string;
 }
 
 class HomeInternal extends React.Component<IProps, IState> {
@@ -30,41 +29,28 @@ class HomeInternal extends React.Component<IProps, IState> {
 
     componentDidMount() {
         const isLoggedIn = this.svc.isLoggedIn();
-        const authName = this.svc.getAuthName();
-        this.setState({isLoggedIn, authName});
+        this.setState({isLoggedIn});
     }
 
-    onLogin() {
-        const isLoggedIn = this.svc.isLoggedIn();
-        const authName = this.svc.getAuthName();
-        this.setState({isLoggedIn, authName});
-    }
 
     onLogout() {
-        this.svc.logout()
-            .then( () => { 
-                           console.log("onLogout - isLoggedIn = "+this.svc.isLoggedIn());
-                           this.setState({isLoggedIn: false});
-                         }                           
-            );        
+        this.svc.logout();
+        console.log("onLogout - isLoggedIn = "+this.svc.isLoggedIn());
+        this.setState({isLoggedIn: false});
     }
 
     public render() {
-        const isLoggedIn = this.state.isLoggedIn;
-        const authName = this.state.authName || "";
+        const isLoggedIn = this.svc.isLoggedIn();
         console.log("Home render isLoggedIn="+isLoggedIn);
 
         return (
             <BrowserRouter>
-               {this.state.isLoggedIn && <Redirect to="/" />}
                <Switch>
                    <Route path="/login" >
-                       <Login onLogin = { () => this.onLogin() } />
+                       <Login />
                    </Route>
-                   <PrivateRoute isLoggedIn={isLoggedIn} >
+                   <PrivateRoute>
                       <PageManager 
-                        isLoggedIn={isLoggedIn}
-                        authName={authName}
                         onLogout = { () => this.onLogout() } 
                       />
                    </PrivateRoute>
@@ -74,6 +60,6 @@ class HomeInternal extends React.Component<IProps, IState> {
     }
 }
 
-const Home = HomeInternal;
+const Home = withRouter(HomeInternal);
 
 export default Home;
