@@ -67,6 +67,11 @@ select * from StandardEPageAddJSON('queue', 'Queues', 'name/Name', 'name/Name' )
 call TRACE( concat( 'TestEPageAddJSON1 ', _js) );
 
 
+select * from StandardEPageAddJSON('localization', 'Localization', 'grp/Resource, key/Key, language/Language, value/Value', 'grp/Resource, key/Key, language/Language, value/Value' ) into _js;
+
+call TRACE( concat( 'TestEPageAddJSON1 ', _js) );
+
+
 
 end
 $$

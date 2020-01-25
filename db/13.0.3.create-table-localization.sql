@@ -1,10 +1,14 @@
 
 call TRACE('create table localization');
 
+drop domain if exists TYPE_LOCALIZATIONKEY;
+CREATE DOMAIN TYPE_LOCALIZATIONKEY varchar(50);
+
+
 create table localization(
 id SERIAL PRIMARY KEY,
 grp varchar(50),
-key varchar(20) not null,
+key TYPE_LOCALIZATIONKEY not null,
 language TYPE_LANGUAGE,
 value varchar(1000)
 );

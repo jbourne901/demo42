@@ -38,6 +38,8 @@ es 9.3.create.sp.successwithoutpayload.sql
 es 9.4.create.sp.errsjson.sql
 es 9.5.create.sp.splitstring.sql
 es 9.6.create.sp.kvjson.sql
+es 9.7.create.sp.squot.sql
+es 9.8.create.sp.dquot.sql
 
 
 
@@ -48,6 +50,7 @@ ess 12.createtablespace.sql
 es 13.drop-tables.sql
 
 es 13.0.1.create.table.entitytable.sql
+es 13.0.1.1.create.sp.eventnotify.sql
 es 13.0.2.create.sp.entityregister.sql
 es 13.0.2.1.create.table.language.sql
 es 13.0.2.2.create.sp.languagefill.sql
@@ -62,9 +65,7 @@ es 13.0.7.create.sp.localizationadd2.sql
 
 
 
-es 13.1.create.sp.eventnotify.sql
 es 13.2.create.sp.eventlistenjson.sql
-
 
 es 14.create-table-users.sql
 es 15.create.sp.userlistjson.sql
@@ -115,4 +116,11 @@ es 39.create.sp.queue.notify.sql
 
 es 40.create.sp.localizationfill.sql
 es 41.create.sp.localizationlistalljson.sql
+es 42.create.sp.listfunctioncreate.sql
+es 43.create.sp.addfunctioncreate.sql
+es 44.create.sp.updatefunctioncreate.sql
+es 45.create.sp.getfunctioncreate.sql
+es 46.create.sp.deletefunctioncreate.sql
+es 47.create.sp.crudfunctionscreate.sql
+
 

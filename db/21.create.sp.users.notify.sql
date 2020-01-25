@@ -1,14 +1,4 @@
 
-call TRACE('create trigger UserNotify');
-
-drop trigger if exists UserNotify on users cascade;
-create trigger UserNotify
-AFTER INSERT OR UPDATE OR DELETE
-ON users
-for each statement
-execute procedure EventNotify();
-
-
 call TRACE('create SP TestUserNotify');
 
 create or replace procedure  TestUserNotify()

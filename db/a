@@ -1,0 +1,10 @@
+select  column_name,  is_nullable, data_type from information_schema.columns where table_name='users' and table_schema='public' order by ordinal_position;
+
+
+ id           | NO          | integer
+ name         | YES         | character varying
+ username     | NO          | character varying
+ hashpassword | YES         | character varying
+ language     | YES         | character varying
+
+

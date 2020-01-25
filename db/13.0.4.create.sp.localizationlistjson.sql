@@ -7,7 +7,7 @@ declare
 _js JSONB;
 begin
 
-select json_agg(q) into _js from (select grp, key, language, value from localization) q;
+select json_agg(q) into _js from (select id, grp, key, language, value from localization) q;
 
 if _js is null then
   _js = '[]';

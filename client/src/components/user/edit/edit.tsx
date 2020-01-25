@@ -208,7 +208,7 @@ class UserEditInternal extends React.Component<IProps, IState> {
         
 
         return (
-            <div>
+            <div className="container col-md-3">
                 <h2>User Edit</h2>
                 <form onSubmit={ (e:React.FormEvent<HTMLFormElement>) =>
                                          this.onSubmit(e) 

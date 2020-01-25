@@ -241,7 +241,7 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         const header = epage.label || "Edit";
         
         return (
-            <div className="container">
+            <div className="container col-md-6">
                 <h2>{header}</h2>
                 <form onSubmit={ (e:React.FormEvent<HTMLFormElement>) =>
                                          this.onSubmit(e) 
