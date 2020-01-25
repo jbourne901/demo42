@@ -11,6 +11,7 @@ export type ILocalizationsResult = IServiceResultWithPayload<ILocalizations>;
 
 export type ILanguagesResult = IServiceResultWithPayload<ILanguage[]>;
 
+export type ILocalizationLocal = (key: string) => string;
 
 export interface ILocalizationService {
     reloadLocalizations(): ICancellableTransportPromise<void>;
@@ -19,15 +20,16 @@ export interface ILocalizationService {
     getLanguage(): string;
     languages(): ILanguage[];
     getLocalization(grp: string, key: string): string;
-    registerLanguageListener(handlerid: string, handlerFunc: IHandlerFunc): void;
+    local(grp: string): ILocalizationLocal;
+    registerLanguageListener(handlerid: string, handlerFunc: IHandlerFunc<number>): void;
     unregisterLanguageListener(handlerid: string): void;
-    registerLocalizationListener(handlerid: string, handlerFunc: IHandlerFunc): void;
+    registerLocalizationListener(handlerid: string, handlerFunc: IHandlerFunc<number>): void;
     unregisterLocalizationListener(handlerid: string): void;
 }
 
 export class LocalizationService implements ILocalizationService {
-    private readonly languageObserver = new Observer();
-    private readonly localizationObserver = new Observer();
+    private readonly languageObserver = new Observer<number>();
+    private readonly localizationObserver = new Observer<number>();
     private readonly BASE_URL: string;
     private static readonly CURRENT_LANGUAGE_KEY = "currentlanguage";
     private static readonly LANGUAGES_KEY = "languages";
@@ -120,6 +122,9 @@ export class LocalizationService implements ILocalizationService {
         }
         return DefaultLanguages;
     }
+    public local(grp: string) {
+        return (key: string) => this.getLocalization(grp, key);
+    }
 
     public getLocalization(grp: string, key: string) {
         const language = this.getLanguage();
@@ -148,7 +153,7 @@ export class LocalizationService implements ILocalizationService {
         return undefined;
     }
 
-    public registerLanguageListener( handlerid: string, handlerFunc: IHandlerFunc) {
+    public registerLanguageListener( handlerid: string, handlerFunc: IHandlerFunc<number>) {
         this.languageObserver.registerListener(handlerid, handlerFunc);
     }
 
@@ -156,12 +161,11 @@ export class LocalizationService implements ILocalizationService {
         this.languageObserver.unregisterListener(handlerid);
     }
 
-    public registerLocalizationListener( handlerid: string, handlerFunc: IHandlerFunc) {
+    public registerLocalizationListener( handlerid: string, handlerFunc: IHandlerFunc<number>) {
         this.localizationObserver.registerListener(handlerid, handlerFunc);
     }
 
     public unregisterLocalizationListener( handlerid: string) {
         this.localizationObserver.unregisterListener(handlerid);
     }
-
 }

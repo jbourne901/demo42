@@ -7,13 +7,14 @@ import ValidationError from '../validation-error';
 import {ILogin, LoginDefault} from "../../model/login";
 import { IAuthService } from "../../service/auth";
 import Service from "../../service";
-import {ILocalizationService} from "../../service/localization";
+import {ILocalizationService, ILocalizationLocal} from "../../service/localization";
 import Language from "../language";
-import { IUniqueId, withUniqueId } from '../uniqueid';
 import { CancelTokenSource } from 'axios';
 import {IServiceResult} from "../../service/service-result"
+import withLanguageListener, { ILanguageProps } from '../with-language-listener/with-language-listener';
+import { ILanguageInfo } from '../../model/language';
 
-interface IProps extends RouteComponentProps, IUniqueId {
+interface IProps extends RouteComponentProps, ILanguageProps {
 }
 
 interface IState {
@@ -22,46 +23,43 @@ interface IState {
     touched: boolean;
     login?: ILogin,
     isLoggedIn: boolean;
-    needrefresh: boolean;
+    language?: ILanguageInfo;
 }
 
 class LoginInternal extends React.Component<IProps, IState> {
     authSvc: IAuthService;
     authSvcCancel?: CancelTokenSource;
     localizationSvc: ILocalizationService;
+    local: ILocalizationLocal;
 
-    private static readonly LOCALIZATION_LOGIN_FORM = "loginform";
+    private static readonly LOCALIZATION_KEY = "loginform";
+
+    public static getDerivedStateFromProps(props: IProps, state: IState) {
+        return {
+            language: props.language
+        };
+    }
 
     constructor(props: IProps) {
         super(props);
         this.authSvc = Service.auth();
 
         this.localizationSvc = Service.localization();
+        this.local = this.localizationSvc.local(LoginInternal.LOCALIZATION_KEY);
+
         this.state = {
             isLoading: false,
             errors: {},
             touched: false,
             isLoggedIn: false,
-            needrefresh: false
+            language: props.language
         };
     }
 
-    public componentDidMount() {
-        this.localizationSvc.registerLanguageListener(this.props.uniqueid, () => this.languageChanged() );
-    }
-
     public componentWillUnmount() {
-        this.localizationSvc.unregisterLanguageListener(this.props.uniqueid);
         if(this.authSvcCancel) {
             this.authSvcCancel.cancel();
         }
-    }
-
-    protected languageChanged() {
-        console.log("login - languageChanged");
-        this.setState({
-            needrefresh: true
-        });
     }
 
     startLoading() {
@@ -99,7 +97,6 @@ class LoginInternal extends React.Component<IProps, IState> {
                 isLoading: false,
                 isLoggedIn: true                
             })
-            //this.props.onLogin();
             return;
         }
         this.setState({
@@ -159,14 +156,13 @@ class LoginInternal extends React.Component<IProps, IState> {
         const usernameError = errors.username || "";
         const passwordError = errors.password || "";
         const error = errors.error || "";
-        const grp = "loginform";
-        const pageheader = this.localizationSvc.getLocalization(grp, "pageheader") || "Login";
-        const label_username = this.localizationSvc.getLocalization(grp, "fieldlabel_username") || "Username";
-        const label_password = this.localizationSvc.getLocalization(grp, "fieldlabel_password") || "Password";
-        const buttonlabel_login = this.localizationSvc.getLocalization(grp, "buttonlabel_login") || "Login";
-
+        
+        const pageheader = this.local("pageheader") || "Login";
+        const label_username = this.local("fieldlabel_username") || "Username";
+        const label_password = this.local("fieldlabel_password") || "Password";
+        const buttonlabel_login = this.local("buttonlabel_login") || "Login";
         return (
-            <div>
+            <div className="container">                
                 <nav className="navbar navbar-inverse navbar-expand-lg">
                    <div className="container-fluid">
                       <div className="navbar-header">
@@ -178,7 +174,8 @@ class LoginInternal extends React.Component<IProps, IState> {
                    </div>
                 </nav>
                 <h2>{pageheader}</h2>
-                <form onSubmit={ (e: React.FormEvent<HTMLFormElement>) => this.onSubmit(e)} >
+                <form className="col-sm-6"
+                    onSubmit={ (e: React.FormEvent<HTMLFormElement>) => this.onSubmit(e)} >
                     <EditField label={label_username} name="username" value={username}
                                error={usernameError}
                                onChange={ (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -203,7 +200,7 @@ class LoginInternal extends React.Component<IProps, IState> {
     }
 }
 
-const tmp = withUniqueId(LoginInternal);
+const tmp = withLanguageListener(LoginInternal);
 const Login = withRouter(tmp);
 
 export default Login;

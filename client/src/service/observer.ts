@@ -1,15 +1,15 @@
 import { IHandlerFunc, IListeners } from "../model/listener";
 
-export interface IObserver {
-    registerListener(handlerid: string, handlerFunc: IHandlerFunc ): void;
-    unregisterListener(handlerid: string, handlerFunc: IHandlerFunc ): void;
+export interface IObserver<T> {
+    registerListener(handlerid: string, handlerFunc: IHandlerFunc<T> ): void;
+    unregisterListener(handlerid: string ): void;
     trigger(): void;
 }
 
-export class Observer implements IObserver {
-    private listeners: IListeners = {};
+export class Observer<T> implements IObserver<T> {
+    private listeners: IListeners<T> = {};
 
-    public registerListener(handlerid: string, handlerFunc: IHandlerFunc) {
+    public registerListener(handlerid: string, handlerFunc: IHandlerFunc<T>) {
         this.listeners[handlerid] = handlerFunc;
     }
 
@@ -17,7 +17,7 @@ export class Observer implements IObserver {
         delete this.listeners[handlerid];
     }
 
-    public trigger() {
-        Object.values(this.listeners).map( (f: IHandlerFunc) => f() );
+    public trigger(t?: T) {
+        Object.values(this.listeners).map( (f: IHandlerFunc<T>) => f(t) );
     }
 }

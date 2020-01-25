@@ -6,6 +6,8 @@ import { BrowserRouter } from "react-router-dom";
 import { ILocalizationService } from "../../service/localization";
 import Loading from "../loading";
 import { CancelTokenSource } from "axios";
+import store from "../../redux/store";
+import {Provider} from "react-redux";
 
 interface IProps {    
 }
@@ -75,9 +77,11 @@ class App extends React.Component<IProps, IState> {
         }
 
         return (            
-            <BrowserRouter>
-               <Home />
-            </BrowserRouter>            
+            <Provider store = {store}>
+               <BrowserRouter>
+                  <Home />
+               </BrowserRouter>
+            </Provider>
          );     
     }
 }

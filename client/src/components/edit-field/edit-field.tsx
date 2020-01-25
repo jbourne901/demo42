@@ -15,7 +15,7 @@ const EditField: React.FC<IProps> = (props: IProps) => {
     const type = props.type || "text";
 
     return (
-        <div className="form-group">
+        <div className="form-group mx-sm-3">
             <label>{label}: </label>
             <input type={type} name={name} value={value} onChange={onChange} 
                className="form-control"

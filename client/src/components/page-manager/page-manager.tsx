@@ -14,26 +14,33 @@ import EPageEdit from "../epage/edit";
 import { IAuthService } from "../../service/auth";
 import Language from "../language";
 import { CancelTokenSource } from "axios";
+import withLanguageListener, { ILanguageProps } from "../with-language-listener/with-language-listener";
+import { ILanguageInfo } from "../../model/language";
+import { ILocalizationLocal } from "../../service/localization";
 
-interface IProps extends RouteComponentProps {
+interface IProps extends RouteComponentProps, ILanguageProps {
     onLogout(): void;
 }
 
 interface IState {
     isLoading: boolean;
     pages: IEPageInfo[];
+    language?: ILanguageInfo;
 }
 
 class PageManagerInternal extends React.Component<IProps, IState> {
-    epageSvc: IEPageService;
-    epageListCancel?: CancelTokenSource;
-    authSvc: IAuthService;
+    private static readonly LOCALIZATION_KEY = "navbarmenu";
+    private epageSvc: IEPageService;
+    private epageListCancel?: CancelTokenSource;
+    private authSvc: IAuthService;
+    private local: ILocalizationLocal;
 
     constructor(props: IProps) {
         super(props);
         console.log("PageManager");
         this.epageSvc = Service.epage();
         this.authSvc = Service.auth();
+        this.local = Service.localization().local(PageManagerInternal.LOCALIZATION_KEY);
         this.state = {
             isLoading: false,
             pages: []
@@ -115,7 +122,11 @@ class PageManagerInternal extends React.Component<IProps, IState> {
         }
         console.dir(this.props);
         const authName = this.authSvc.getAuthName() || "";
-        const logoutMsg = "Logged in as: " + authName;
+        const loggedInAsLabel = (this.local("loggedinas") || "Logged in as") + ": " + authName;
+        const usersLabel = this.local("users");
+        const campaignsLabel = this.local("campaigns");
+        const logoutLabel = this.local("logout");
+
         const pages = this.state.pages || [];
         const listpages = pages.filter( (p) => p.type === "list" );
         return (
@@ -127,10 +138,10 @@ class PageManagerInternal extends React.Component<IProps, IState> {
                       </div>
                       <ul className="nav navbar-nav">
                          <li> 
-                             <NavLink to="/users"> Users </NavLink>
+                             <NavLink to="/users"> {usersLabel} </NavLink>
                          </li>
                          <li> 
-                             <NavLink to="/campaigns"> Campaigns </NavLink> 
+                             <NavLink to="/campaigns"> {campaignsLabel} </NavLink> 
                          </li>
                       </ul>
                       <ul className="nav navbar-nav">
@@ -140,7 +151,7 @@ class PageManagerInternal extends React.Component<IProps, IState> {
                         <Language />
                         <li className="nav-item">
                            <a href="/#">
-                               <span>{logoutMsg}</span>
+                               <span>{loggedInAsLabel}</span>
                            </a>
                         </li>
                         <li className="nav-item">
@@ -148,7 +159,7 @@ class PageManagerInternal extends React.Component<IProps, IState> {
                                         className="btn btn-link"
                            >
                               <span className="glyphicon glyphicon-log-in"></span>
-                                 Logout
+                                 {logoutLabel}
                            </a>
                         </li>
                       </ul>
@@ -185,6 +196,7 @@ class PageManagerInternal extends React.Component<IProps, IState> {
     }
 }
 
-const PageManager = withRouter(PageManagerInternal);
+const tmp = withLanguageListener(PageManagerInternal);
+const PageManager = withRouter(tmp);
 
 export default PageManager;
