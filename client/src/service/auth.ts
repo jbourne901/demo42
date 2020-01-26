@@ -3,20 +3,24 @@ import {ILogin} from "../model/login";
 import { IServiceResultWithPayload, IServiceResult } from "./service-result";
 import extractSvcData from "./extract-svc-data";
 import jwt from "jsonwebtoken";
-import Transport, {ICancellableTransportPromise} from "../framework/transport";
+import {ICancellableTransportPromise} from "../framework/transport";
+import {ISession, NoSession} from "../model/session";
+import { ICommonService, CommonService } from "./common-service";
 
 export type IAuthInfoServiceResult = IServiceResultWithPayload<IAuthInfo>;
 
-export interface IAuthService  {
+export interface IAuthService extends ICommonService {
    login(login: ILogin): ICancellableTransportPromise<IServiceResult>;
    isLoggedIn(): boolean;
    getAuthName(): string;
    logout(): IServiceResult;
+   session(): ISession;
 }
 
-export class AuthService implements IAuthService {
+export class AuthService extends CommonService implements IAuthService {
     private readonly BASE_URL: string;
     constructor() {
+        super();
         this.BASE_URL=process.env.REACT_APP_API_URL + "/auth";
     }
 
@@ -24,8 +28,7 @@ export class AuthService implements IAuthService {
         const url = this.BASE_URL+"/login";
         console.log("Authservice.login url="+url);
         console.dir(login);
-        //return axios.post<IAuthInfoServiceResult>(url, {login})
-        const cancellablePromise = Transport.post<IAuthInfoServiceResult>(url, {login});
+        const cancellablePromise = this.postWithSession<IAuthInfoServiceResult>(url,{login});
         const promise = cancellablePromise.promise
                                           .then( (res) => this.processAuthResult(res) )
                                           .catch( (err) => this.processLoginError(err) );
@@ -67,7 +70,10 @@ export class AuthService implements IAuthService {
             if(decoded && typeof decoded === "object" && decoded.payload) {
                 const auth = decoded.payload;
                 const authName = auth.name;
+                const sessionkey: string = auth.sessionkey;
+                const session: ISession = {sessionkey};
                 window.localStorage.setItem("authName", authName);
+                window.localStorage.setItem("session", JSON.stringify(session));
             }            
         }
         const svcResult: IServiceResult = {
@@ -88,7 +94,18 @@ export class AuthService implements IAuthService {
     public logout() {
         window.localStorage.removeItem("authName");
         window.localStorage.removeItem("isLoggedIn");
+        window.localStorage.removeItem("session");
         const res: IServiceResult = {result: "OK", errors: {} };
         return res;
+    }
+
+    public session() {
+        console.log("AuthService.session()");
+        const sessionstr = window.localStorage["session"]; 
+        let session = NoSession;
+        if(sessionstr && sessionstr.length>0) {
+            session = JSON.parse(sessionstr);
+        }
+        return session;
     }
 }

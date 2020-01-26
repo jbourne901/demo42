@@ -1,5 +1,6 @@
 import axios, { CancelTokenSource } from "axios";
 import extractSvcData from "../service/extract-svc-data";
+import { ISession } from "../model/session";
 
 export interface ICancellableTransportPromise<T> {
     promise: Promise<T>;
@@ -19,6 +20,10 @@ export class Transport {
             cancelControl: source            
         };
         return cancellablePromise;
+    }
+
+    public static postWithSession<T>(url: string, session: ISession, params: any) {
+        return Transport.post<T>(url, {session, ...params})
     }
 }
 

@@ -11,7 +11,7 @@ import {ILocalizationService, ILocalizationLocal} from "../../service/localizati
 import Language from "../language";
 import { CancelTokenSource } from 'axios';
 import {IServiceResult} from "../../service/service-result"
-import withLanguageListener, { ILanguageProps } from '../with-language-listener/with-language-listener';
+import {withLanguageListener, ILanguageProps } from '../with-language-listener';
 import { ILanguageInfo } from '../../model/language';
 
 interface IProps extends RouteComponentProps, ILanguageProps {

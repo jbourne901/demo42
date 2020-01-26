@@ -10,10 +10,12 @@ export default class AuthController extends Controller {
                               next: express.NextFunction) {
         const myself = this.getMyself("login");
         const login = req.body.login;
+        const session = req.body.session;
         BowLog.log1(myself, "+++login");
         BowLog.dir(myself, login);
+        BowLog.dir(myself, session);
 
-        return UserRepository.userLogin(login)
+        return UserRepository.userLogin(session, login)
                              .then( (payload: IAuth) => this.sendSuccessWithPayload(payload, req, res, next))
                              .catch( (err: any) => this.processError(err, req, res, next) );
     }

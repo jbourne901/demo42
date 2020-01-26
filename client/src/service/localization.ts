@@ -5,7 +5,8 @@ import {IServiceResultWithPayload} from "./service-result";
 import {ILanguage, DefaultLanguages} from "../model/language";
 import { Observer } from "./observer";
 import { IHandlerFunc } from "../model/listener";
-import Transport, {ICancellableTransportPromise} from "../framework/transport";
+import {ICancellableTransportPromise} from "../framework/transport";
+import { ICommonService , CommonService } from "./common-service";
 
 export type ILocalizationsResult = IServiceResultWithPayload<ILocalizations>;
 
@@ -13,7 +14,7 @@ export type ILanguagesResult = IServiceResultWithPayload<ILanguage[]>;
 
 export type ILocalizationLocal = (key: string) => string;
 
-export interface ILocalizationService {
+export interface ILocalizationService extends ICommonService {
     reloadLocalizations(): ICancellableTransportPromise<void>;
     reloadLanguages(): ICancellableTransportPromise<void>;
     setLanguage(language: string): void;
@@ -27,7 +28,7 @@ export interface ILocalizationService {
     unregisterLocalizationListener(handlerid: string): void;
 }
 
-export class LocalizationService implements ILocalizationService {
+export class LocalizationService extends CommonService implements ILocalizationService {
     private readonly languageObserver = new Observer<number>();
     private readonly localizationObserver = new Observer<number>();
     private readonly BASE_URL: string;
@@ -38,6 +39,7 @@ export class LocalizationService implements ILocalizationService {
     private static readonly DEFAULT_LANG = "en";
 
     constructor() {
+        super();
         this.BASE_URL=process.env.REACT_APP_API_URL + "/localization";
     }
     
@@ -45,7 +47,7 @@ export class LocalizationService implements ILocalizationService {
         const url = this.BASE_URL+"/alllanguages";
         console.log("reloadLanguages url="+url);
         //return axios.post<ILanguagesResult>(url)
-        const promise1 = Transport.post<ILanguagesResult>(url, {});
+        const promise1 = this.postWithSession<ILanguagesResult>(url, {});
         const p = promise1.promise
                           .then( (res) => this.reloadLanguagesCallback(res) )
                           .catch( (err: any) => this.reloadLanguagesError(err) );
@@ -75,7 +77,7 @@ export class LocalizationService implements ILocalizationService {
         const url = this.BASE_URL+"/all";
         console.log("reloadLocalizations url="+url);
         //return axios.post<ILocalizationsResult>(url)
-        const promise1 = Transport.post<ILocalizationsResult>(url, {});
+        const promise1 = this.postWithSession<ILocalizationsResult>(url, {});
         const p = promise1.promise
                           .then( (res) => this.reloadLocalizationsCallback(res) )
                           .catch( (err: any) => this.reloadLocalizationsError(err) );

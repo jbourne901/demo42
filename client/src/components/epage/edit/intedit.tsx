@@ -8,8 +8,10 @@ import ValidationError from "../../validation-error";
 import { IEPageService, IEPageGetResult, IEntityGetResult, IActionResult } from '../../../service/epage';
 import Service from '../../../service';
 import {CancelTokenSource} from "axios";
+import {withLanguageListener, ILanguageProps } from '../../with-language-listener/with-language-listener';
+import { ILanguageInfo } from '../../../model/language';
 
-interface IProps extends RouteComponentProps {
+interface IProps extends RouteComponentProps, ILanguageProps {
     epageid: string;
     entityid?: string;
 }
@@ -20,14 +22,17 @@ interface IState {
     entity?: any;
     errors: IErrors,
     touched: boolean;
+    language?: ILanguageInfo;
 }
 
 class EPageIntEditInternal extends React.Component<IProps, IState> {
 
+    
     private svc: IEPageService;
     private epageGetCancel?: CancelTokenSource;
     private entityGetCancel?: CancelTokenSource;
     private pageActionCancel?: CancelTokenSource;
+    
 
     constructor(props: IProps) {
         super(props);
@@ -39,6 +44,12 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
             isLoading: false,
             errors: {},
             touched: false
+        };        
+    }
+
+    public static getDerivedStateFromProps(props: IProps, state: IState) {
+        return {
+            language: props.language
         };
     }
 
@@ -132,11 +143,20 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         }
         error = this.state.errors[f.name];
         const type = f.type || "text";
-        console.log("formatField key="+key+" label="+f.label+" name="+f.name+" value="+value+" error="+error+" type="+type);
-        console.dir(this.state.errors);        
+        // console.log("formatField key="+key+" label="+f.label+" name="+f.name+" value="+value+" error="+error+" type="+type);
+        // console.dir(this.state.errors);   
+        const grp = (epage?.entity+"_edit").toLowerCase();
+        let fldname = ("fieldname_"+f.name).toLowerCase()
+        const localizedLabel = this.props.localization.getLocalization(grp, fldname) || f.label;        
+        let localizedError = error;
+        const tmp1 = this.props.localization.getLocalization(grp, error);
+        if(tmp1 && tmp1.length>0) {
+            localizedError = tmp1;
+        }
+
         return (
-            <EditField key={key} label={f.label} name={f.name} value={value} type={type}
-               error={error}
+            <EditField key={key} label={localizedLabel} name={f.name} value={value} type={type}
+               error={localizedError}
                onChange={ (e) => this.onChange(e) }
             />
         );
@@ -158,8 +178,11 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
 
     protected formatAction(a: IEPageAction) {
         const key = a.name;
+        const grp = (this.state.epage?.entity+"_edit").toLowerCase();
+        const lbl = ("buttonlabel_"+a.label).toLowerCase();
+        const localizedLabel = this.props.localization.getLocalization(grp, lbl) || a.label;
         return (
-            <button key={key} type="button" onClick={ () => this.onAction(a)}>{a.label}</button>
+            <button key={key} type="button" onClick={ () => this.onAction(a)}>{localizedLabel}</button>
         )
     }
 
@@ -238,11 +261,14 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         const fields = epage.fields;
         const error = this.state.errors.error;
         const actions = epage.pageactions;
-        const header = epage.label || "Edit";
+
+        const grp = (this.state.epage.entity).toLowerCase();        
+        const header = epage.label.toLowerCase();
+        const localizedHeader = this.props.localization.getLocalization(grp, header) || "Edit";
         
         return (
             <div className="container col-md-6">
-                <h2>{header}</h2>
+                <h2>{localizedHeader}</h2>
                 <form onSubmit={ (e:React.FormEvent<HTMLFormElement>) =>
                                          this.onSubmit(e) 
                                }
@@ -261,6 +287,7 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
     }   
 }
 
-const EPageIntEdit = withRouter(EPageIntEditInternal);
+const tmp = withLanguageListener(EPageIntEditInternal);
+const EPageIntEdit = withRouter(tmp);
 
 export default EPageIntEdit;

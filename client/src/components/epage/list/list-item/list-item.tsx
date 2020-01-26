@@ -1,15 +1,26 @@
 import React from 'react';
 import {withRouter, RouteComponentProps} from "react-router-dom";
 import { IEPage, IEPageField, IEPageAction } from "../../../../model/epage";
+import { withLanguageListener, ILanguageProps } from '../../../with-language-listener';
+import { ILanguageInfo } from '../../../../model/language';
 
-interface IProps extends RouteComponentProps {
+interface IProps extends RouteComponentProps, ILanguageProps {
     epage: IEPage;
     entity: any;
     itemactions: IEPageAction[];
     onItemAction(a:IEPageAction):void;
 }
 
-class EPageListItemInternal extends React.Component<IProps> {
+interface IState {
+    language?: ILanguageInfo;
+}
+
+class EPageListItemInternal extends React.Component<IProps, IState> {
+
+    constructor(props: IProps) {
+        super(props);
+        this.state = {};
+    }
 
     protected formatEntityCell(field: IEPageField) {
         const entity = this.props.entity;
@@ -32,8 +43,11 @@ class EPageListItemInternal extends React.Component<IProps> {
         const pkname = epage.pkname;
         const entityid = entity[pkname];
         const key = entityid + "_" + a.name;
+        const grp = this.props.epage.entity + "_list";
+        const locKey = "buttonlabel_"+a.name;
+        const locLabel = this.props.localization.getLocalization(grp, locKey) || a.label;
         return (
-           <button key={key} onClick={ () => this.props.onItemAction(a) }>{a.label}</button>
+           <button key={key} onClick={ () => this.props.onItemAction(a) }>{locLabel}</button>
         );        
     }
 
@@ -53,6 +67,7 @@ class EPageListItemInternal extends React.Component<IProps> {
     }
 }
 
-const EPageListItem = withRouter(EPageListItemInternal);
+const tmp = withRouter(EPageListItemInternal);
+const EPageListItem = withLanguageListener(tmp);
 
 export default EPageListItem;

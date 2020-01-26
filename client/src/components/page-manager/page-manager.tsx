@@ -14,7 +14,7 @@ import EPageEdit from "../epage/edit";
 import { IAuthService } from "../../service/auth";
 import Language from "../language";
 import { CancelTokenSource } from "axios";
-import withLanguageListener, { ILanguageProps } from "../with-language-listener/with-language-listener";
+import {withLanguageListener, ILanguageProps } from "../with-language-listener";
 import { ILanguageInfo } from "../../model/language";
 import { ILocalizationLocal } from "../../service/localization";
 

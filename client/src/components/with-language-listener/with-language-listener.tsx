@@ -14,6 +14,7 @@ interface IState {
 
 export interface ILanguageProps {
     language: ILanguageInfo;
+    localization: ILocalizationService;
 }
 
 class LanguageListenerInternal extends React.Component<IProps, IState> {
@@ -49,17 +50,15 @@ class LanguageListenerInternal extends React.Component<IProps, IState> {
         const language = this.state.language;
         const WrappedComponent = this.props.WrappedComponent;
         return (
-            <WrappedComponent {...this.props} language={language} />
+            <WrappedComponent {...this.props} language={language} localization={this.svc} />
         );                    
     }
 }
 
 const LanguageListener = withUniqueId(LanguageListenerInternal);
 
-const withLanguageListener = (Wrapped: any) => (props: any) => {
+export const withLanguageListener = (Wrapped: any) => (props: any) => {
     return (
         <LanguageListener {...props} WrappedComponent = {Wrapped} />
     )
 }
-
-export default withLanguageListener;

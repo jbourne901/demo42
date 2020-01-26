@@ -7,8 +7,10 @@ export default class LocalizationController extends Controller {
 
     public static async listAll(req: Request, res: Response, next: NextFunction) {
         const myself = LocalizationController.getMyself("listAll");
-        BowLog.log1(myself, "");
-        return LocalizationRepository.listAll()
+        const session = req.body.session;
+        BowLog.log1(myself, " session=");
+        BowLog.dir(myself, session);
+        return LocalizationRepository.listAll(session)
                 .then( (localizations: ILocalizations) =>
                             Controller.sendSuccessWithPayload(localizations, req, res, next)
                      )
@@ -17,8 +19,10 @@ export default class LocalizationController extends Controller {
 
     public static async listAllLanguages(req: Request, res: Response, next: NextFunction) {
         const myself = LocalizationController.getMyself("listAllLanguages");
-        BowLog.log1(myself, "");
-        return LocalizationRepository.listAllLanguages()
+        const session = req.body.session;
+        BowLog.log1(myself, " session=");
+        BowLog.dir(myself, session);
+        return LocalizationRepository.listAllLanguages(session)
                 .then( (languages: ILanguage[]) =>
                             Controller.sendSuccessWithPayload(languages, req, res, next)
                      )
