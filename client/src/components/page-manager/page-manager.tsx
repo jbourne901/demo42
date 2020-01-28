@@ -17,6 +17,7 @@ import { CancelTokenSource } from "axios";
 import {withLanguageListener, ILanguageProps } from "../with-language-listener";
 import { ILanguageInfo } from "../../model/language";
 import { ILocalizationLocal } from "../../service/localization";
+import DragDrop from "../drag-drop";
 
 interface IProps extends RouteComponentProps, ILanguageProps {
     onLogout(): void;
@@ -143,6 +144,9 @@ class PageManagerInternal extends React.Component<IProps, IState> {
                          <li> 
                              <NavLink to="/campaigns"> {campaignsLabel} </NavLink> 
                          </li>
+                         <li> 
+                             <NavLink to="/dragdrop"> DragDrop </NavLink> 
+                         </li>
                       </ul>
                       <ul className="nav navbar-nav">
                       {listpages.map( (p: IEPageInfo) => this.formatPage(p) )}
@@ -177,6 +181,9 @@ class PageManagerInternal extends React.Component<IProps, IState> {
                    </PrivateRoute>
                    <PrivateRoute exact path="/campaigns">
                       <CampaignList />
+                   </PrivateRoute>
+                   <PrivateRoute exact path="/dragdrop">
+                      <DragDrop />
                    </PrivateRoute>
                    <PrivateRoute exact path="/epage/:epageid/list">
                       <EPageList />

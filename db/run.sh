@@ -132,4 +132,6 @@ es 01375.create.sp.getfunctioncreate.sql
 es 01380.create.sp.deletefunctioncreate.sql
 es 01385.create.sp.crudfunctionscreate.sql
 
+es 014100.create.table.menu.sql
+es 014105.create.sp.menulist.sql
 

@@ -1,0 +1,82 @@
+<html>
+    <head>
+        <style type="text/css">
+            .static {
+                cursor: not-allowed;
+              }
+        </style>
+        <script type="text/javascript">
+            const elements = [];
+            function makeDraggable4(evt) {
+              var svg = evt.target;
+              svg.addEventListener('mousedown', startDrag);
+              svg.addEventListener('mousemove', drag);
+              svg.addEventListener('mouseup', endDrag);
+              svg.addEventListener('mouseleave', endDrag);
+      
+              function getMousePosition(evt) {
+                var CTM = svg.getScreenCTM();
+                return {
+                  x: (evt.clientX - CTM.e) / CTM.a,
+                  y: (evt.clientY - CTM.f) / CTM.d
+                };
+              }
+      
+              var selectedElement, offset;
+      
+              function startDrag(evt) {
+                  
+                if (evt.target.classList.contains('draggable')) {
+                  selectedElement = evt.target;
+                  offset = getMousePosition(evt);
+                  offset.x -= parseFloat(selectedElement.getAttributeNS(null, "x"));
+                  offset.y -= parseFloat(selectedElement.getAttributeNS(null, "y"));
+                }
+              }
+      
+              function drag(evt) {
+                if (selectedElement) {
+                  evt.preventDefault();
+                  var coord = getMousePosition(evt);
+                  selectedElement.setAttributeNS(null, "x", coord.x - offset.x);
+                  selectedElement.setAttributeNS(null, "y", coord.y - offset.y);
+                }
+              }
+      
+              function endDrag(evt) {
+                selectedElement = null;
+              }
+            }
+
+            function addElement() {
+                const canvas = document.getElementById("canvas");
+                console.log("add canvas="+canvas);
+                var svgNS = "http://www.w3.org/2000/svg";
+                var box = document.createElementNS(svgNS,"rect");
+                box.setAttributeNS(null,"id","box");
+                box.setAttributeNS(null,"x",1);
+                box.setAttributeNS(null,"y",2);
+                box.setAttributeNS(null,"width",1);
+                box.setAttributeNS(null,"height",1);
+                box.setAttributeNS(null,"fill","blue");
+                box.setAttributeNS(null, "class", "draggable");
+                elements.push(box.id);
+                canvas.appendChild(box);
+                
+                /*
+                canvas.appendChild(
+                    "<rect class='draggable' x='1.0130678282513994' y='2.6104542626011202' width='3' height='3' fill='#007bff'> </rect>"
+                );*/
+
+            }
+           </script>
+    </head>
+<body>
+    <svg id="canvas" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 10" 
+        onload="makeDraggable4(evt)">                    
+      <rect id="bkg " x="0" y="0" width="15" height="10" class="background"></rect>
+    </svg>
+
+    <button onclick="addElement()">Add</button>
+</body>
+<html>

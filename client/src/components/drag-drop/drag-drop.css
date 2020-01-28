@@ -1,0 +1,35 @@
+.block {
+    fill: rgb(187,232,255);
+    stroke:darkgray;
+    stroke-width:1;
+}
+
+.block-selected {
+    fill:rgb(187,232,255);
+    stroke:rgb(80, 79, 79);
+    stroke-width:2;
+}
+
+.canvas {
+    fill: rgba(17, 17, 17, 0.322);
+    stroke: gray;
+    stroke-width:0.5;
+}
+
+.block {
+    stroke: rgb(56,139,255);
+    fill: rgb(187,232,255);
+    stroke-width: 0.2;
+}
+
+.block-rect {
+    fill: white
+}
+
+.block-text {
+    stroke:black; 
+    fill:black;
+    font-family: "10pt Verdana, sans-serif";
+    font-weight: lighter;
+    font-size: 18px;
+}
