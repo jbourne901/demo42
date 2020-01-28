@@ -1,14 +1,23 @@
+
 .block {
+    stroke: black;
     fill: rgb(187,232,255);
-    stroke:darkgray;
-    stroke-width:1;
+    stroke-width: 1;
 }
 
 .block-selected {
-    fill:rgb(187,232,255);
-    stroke:rgb(80, 79, 79);
-    stroke-width:2;
+    stroke:blue !important;
+    stroke-width:3 !important;
 }
+
+.block-pointed {
+    stroke:lightblue !important;
+    fill: rgb(207,252,255) !important;
+    stroke-width:3 !important;
+}
+ 
+
+
 
 .canvas {
     fill: rgba(17, 17, 17, 0.322);
@@ -16,20 +25,73 @@
     stroke-width:0.5;
 }
 
-.block {
-    stroke: rgb(56,139,255);
-    fill: rgb(187,232,255);
-    stroke-width: 0.2;
+
+.palette {
+    fill: rgba(17, 17, 17, 0.322);
+    stroke: blue;
+    stroke-width:0.5;
 }
+
 
 .block-rect {
     fill: white
 }
 
 .block-text {
+    cursor: default;
     stroke:black; 
     fill:black;
     font-family: "10pt Verdana, sans-serif";
     font-weight: lighter;
     font-size: 18px;
+}
+
+.block-port-knob {
+    fill:lightgray;
+    stroke: black;
+    stroke-width: 1;
+}
+
+.block-port-knob-pointed {
+    stroke: red;
+    stroke-width: 1;
+}
+
+.block-port-text {
+    cursor : default;
+    stroke:black; 
+    fill:black;
+    font-family: "10pt Verdana, sans-serif";
+    font-weight: lighter;
+    font-size: 18px;
+    text-align: right;
+}
+
+.block-port-text-pointed {
+    cursor : default;
+    stroke:black; 
+    fill:black;
+    font-family: "10pt Verdana, sans-serif";
+    font-weight: bold;
+    font-size: 18px;
+    text-align: right;
+}
+
+.block-port-txtborder {
+    fill:white;
+}
+
+
+.block-port-txtborder-pointed {
+    fill:white;
+    stroke:gray; 
+    stroke-width: 1;
+}
+
+
+
+.block-port-txtborder-selected {
+    fill:white;
+    stroke:red; 
+    stroke-width: 1;
 }
