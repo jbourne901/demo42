@@ -32,6 +32,7 @@ interface IState {
     selectedElementId?: string;
     pointedElementId?: string;
     offset?: ICoords;
+    lastMousePos?: ICoords;
     selectedPortId?: string;
     pointedPortId?: string;
     selectedPortX?: number;
@@ -161,19 +162,34 @@ class DragDrop extends React.Component<IProps, IState> {
         e.persist();
         console.log("onMouseDown e=");
         console.dir(e);
-        const ndx = this.eventTargetBlockIndexPlus1(e);
-        console.log("onMouseDown ndx="  + ndx);
-        if ( ndx>0 && this.state.elements[ndx-1]) {
-            const selectedElement = this.state.elements[ndx-1];
-            const offset: ICoords = this.getMousePosition(e);
+        const ndxBlock = this.eventTargetBlockIndexPlus1(e);
+        console.log("onMouseDown ndxBlock="  + ndxBlock);
+        if ( ndxBlock>0 && this.state.elements[ndxBlock-1]) {
+            e.preventDefault();
+            const selectedElement = this.state.elements[ndxBlock-1];
+            const ndxPort = this.eventTargetPortIndexPlus1(selectedElement, e);            
+            const lastMousePos: ICoords = this.getMousePosition(e);
+            if(ndxPort>0) {
+                const selectedPortId = selectedElement.ports[ndxPort-1].uniqueid;
+                console.log("qqqqqq set lastmousepos=");
+                console.dir(lastMousePos);
+                return this.setState({
+                    selectedElementId: selectedElement.uniqueid,
+                    selectedPortId,
+                    offset: undefined,
+                    lastMousePos
+                });    
+            }
+            const offset: ICoords = lastMousePos;
             offset.x -= parseFloat(""+selectedElement.x);
             offset.y -= parseFloat(""+selectedElement.y);
-            console.log("mouseDown set selectedElementId="+ (selectedElement.uniqueid) );
-            const ndxPort = this.eventTargetPortIndexPlus1(selectedElement, e);
-            this.setState({
+            console.log("qqqqqq set lastmousepos=");
+            console.dir(lastMousePos);
+            return this.setState({
                     selectedElementId: selectedElement.uniqueid,
                     selectedPortId: undefined,
-                    offset
+                    offset,
+                    lastMousePos
             });    
         } else {
             this.setState({
@@ -186,13 +202,7 @@ class DragDrop extends React.Component<IProps, IState> {
 
     protected getMousePosition(e: React.MouseEvent) {
         const svg = document.getElementById("canvas") as any;
-        console.log("getMousePosition svg=");
-        console.dir(svg);
         const CTM = svg.getScreenCTM();
-        console.log("CTM=");
-        console.dir(CTM);
-        console.log("e = ");
-        console.dir(e);
         const coords: ICoords = {
             x: (e.clientX - CTM.e) / CTM.a,
             y: (e.clientY - CTM.f) / CTM.d
@@ -217,22 +227,56 @@ class DragDrop extends React.Component<IProps, IState> {
                     if(newBlock) {
                         newElements = [...newElements, newBlock];
                     }                    
-                }                
+                }
                 return this.setState({ elements: newElements,
-                                       offset: undefined
+                                       offset: undefined,
+                                       lastMousePos: undefined
                                      });
             } else {
-                if(!this.isInCanvas(el)) {
+                if(this.isInCanvas(el)) {
+                    if(this.state.selectedPortId && this.state.lastMousePos) {
+                        const blockNdx = this.findElementIndexPlus1(this.state.selectedElementId);                        
+                        if(blockNdx>0) {
+                            const selectedElement = this.state.elements[blockNdx-1];
+                            if(selectedElement) {
+                                const portNdx = this.findPortIndexPlus1(selectedElement, this.state.selectedPortId);
+                                if(portNdx>0) {
+                                    const selectedPort = selectedElement.ports[portNdx-1];
+                                    if(selectedPort) {
+                                        const newPort = {...selectedPort};
+                                        newPort.connectedToId=el.uniqueid;
+                                        const newPorts = selectedElement.ports.map( (p) => (p.uniqueid===this.state.selectedPortId)?newPort:p);                                        
+                                        const newElement = {...selectedElement, ports: newPorts};
+                                        const newElements = this.state.elements.map( (elm) => (elm.uniqueid===selectedPort.uniqueid)?newElement:elm);
+                                        return this.setState({
+                                                              elements: newElements,
+                                                              offset: undefined,
+                                                              lastMousePos: undefined     
+                                        });
+                                    }
+                                }
+                            }                            
+                        }
+                    }
+                    return this.setState({
+                        offset: undefined,
+                        lastMousePos: undefined     
+                    });
+                } else {
                     console.log("non-template block outside canvas - undoing move");
                     const newElements = this.undoMoveElements(el);
                     //return this.setState({ blockDragOffset: undefined});
-                    return this.setState({ elements: newElements, offset: undefined});
+                    return this.setState({ elements: newElements, 
+                                           offset: undefined,
+                                           lastMousePos: undefined
+                                         });
                 }
             }
         }
         
         return this.setState({
             offset: undefined,
+            lastMousePos: undefined
         });
     }
 
@@ -279,6 +323,7 @@ class DragDrop extends React.Component<IProps, IState> {
 
     protected onMouseMove(e: React.MouseEvent) {
         e.persist();
+        const lastMousePos = this.getMousePosition(e);
         if(e.buttons===1){
             if(this.state.selectedElementId && this.state.selectedElementId.length>0) {
                 const ndx1 = this.findElementIndexPlus1(this.state.selectedElementId);
@@ -293,12 +338,16 @@ class DragDrop extends React.Component<IProps, IState> {
                         const newElements = this.state.elements.map( (el, ndx) => 
                             (ndx === ndx1-1) ? {...el, x, y} : el 
                                                                    );
-                        return this.setState({elements: newElements});
+                        console.log("qqqqqq set lastmousepos=");
+                        console.dir(lastMousePos);
+                                                   
+                        return this.setState({elements: newElements, lastMousePos});
                     }
                 }            
-            } 
-            if(this.state.selectedPortId && this.state.selectedPortId.length>0) {
             }
+            console.log("qqqqqq set lastmousepos=");
+            console.dir(lastMousePos);
+            return this.setState({lastMousePos});
         }
         let pointedElementId;
         let pointedPortId;
@@ -374,12 +423,15 @@ class DragDrop extends React.Component<IProps, IState> {
         const isPointed = (e.uniqueid === this.state.pointedElementId) || false;
         const pointedPortId = (isPointed) ? this.state.pointedPortId : undefined;
         const selectedPortId = (isSelected) ? this.state.selectedPortId : undefined;
-
+        const lastMousePos = this.state.lastMousePos;
+        const lastX = (lastMousePos || {}).x;
+        const lastY = (lastMousePos || {}).y;
+console.log("qqqqqqqqqqq lastX="+lastX+" lastY="+lastY);
         return (            
             <Block key={key} x={x} y={y} w={w} h={h} uniqueid={key} 
                 isSelected={isSelected} label={label} ports = {ports}
                 isPointed = {isPointed} pointedPortId = {pointedPortId}
-                selectedPortId = {selectedPortId}
+                selectedPortId = {selectedPortId} lastMousePos = {lastMousePos}
             />
         );
     }
@@ -410,23 +462,6 @@ class DragDrop extends React.Component<IProps, IState> {
                 {jsxSelected}
             </React.Fragment>            
         );
-
-    }
-
-    protected formatDraggedConnector() {
-        const {selectedElementId, selectedPortId, selectedPortX, selectedPortY } = this.state;
-        if(selectedElementId && selectedPortId && selectedPortId.length>0 && 
-            selectedPortX!== undefined && selectedPortY!== undefined ) {
-                const ndxBlock = this.findElementIndexPlus1(selectedElementId);
-                if(ndxBlock>0) {
-                    const selectedElement = this.state.elements[ndxBlock-1];
-                    const ndxPort = this.findPortIndexPlus1(selectedElement, selectedPortId);
-                    if( ndxPort > 0) {
-                        const selectedPort = selectedElement.ports[ndxPort-1];
-                    }
-                }
-                
-        }
     }
 
 

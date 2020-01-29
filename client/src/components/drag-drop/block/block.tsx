@@ -1,6 +1,7 @@
 import React from 'react';
 import IPort from "../../../model/port";
 import ILabelledShape from "../../../model/labelled-shape";
+import ICoords from '../../../model/coords';
 
 interface IProps extends ILabelledShape {
     isSelected: boolean;
@@ -10,6 +11,7 @@ interface IProps extends ILabelledShape {
     ports: IPort[];
     pointedPortId?: string;
     selectedPortId?: string;
+    lastMousePos?: ICoords;
 }
 
 class BlockInternal extends React.Component<IProps> {
@@ -84,11 +86,32 @@ class BlockInternal extends React.Component<IProps> {
             />    
         );
 
+        let dragConn = null;
+        if(this.props.selectedPortId === p.uniqueid && this.props.lastMousePos) {
+            const x1=(portX+this.PORT_WIDTH);
+            const y1=(portY+this.PORT_HEIGHT/2);
+            const x2 = this.props.lastMousePos.x;
+            const y2 = this.props.lastMousePos.y;
+            const dragConnKey = portKey+this.FLD_DELIM+"dragconn";
+            const dragConnProps = {
+                id:dragConnKey,
+                key:dragConnKey,
+                x1, y1, x2, y2,
+                className:"block-port-dragconn"
+            };
+            console.log("000000000000000000000 line ");
+            console.dir(dragConnProps);
+            dragConn = (
+                <line {...dragConnProps}></line>
+            );
+        }
+
         return (
             <React.Fragment key={portKey}>
                 {knob}
                 {txtBorder}
-                {text}                
+                {text}
+                {dragConn}
             </React.Fragment>
         );
     }

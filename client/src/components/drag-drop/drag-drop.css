@@ -95,3 +95,9 @@
     stroke:red; 
     stroke-width: 1;
 }
+
+
+.block-port-dragconn {
+    stroke: red;
+    stroke-width: 2;
+}
