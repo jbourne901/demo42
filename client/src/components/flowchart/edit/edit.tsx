@@ -423,10 +423,72 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
     }
 
     protected addBlock() {
-        const newBlock = this.createElementInfo(this.START_X, this.START_Y, "NewBlock",
-        [ "Port1", "Port2","Port3"],
-        false);
-        const blocks = {...this.state.blocks, newBlock };
+//        const newBlock = this.createElementInfo(this.START_X, this.START_Y, "NewBlock", [ "Port1", "Port2","Port3"], false);
+        const t1: IBlocks = {};
+        let prevBlock: IBlock;
+        [...Array(12)].forEach( (n, ndx) => { const b = this.createElementInfo(
+                                                      this.START_X+ndx*200, 
+                                                      20,
+                                                      "NewBlock"+ndx,
+                                                      [ "Port1", "Port2","Port3"],
+                                                      false
+                                                   );
+                                              if(prevBlock!==undefined) {
+                                                  prevBlock.ports[0].connectedToId=b.uniqueid;
+                                              }
+                                              prevBlock=b;
+                                        t1[b.uniqueid] = b;
+                                      }
+                            );
+
+        const t2: IBlocks = {};
+        [...Array(12)].forEach( (n, ndx) => { const b = this.createElementInfo(
+                                               this.START_X+ndx*200, 
+                                               200,
+                                               "NewBlock"+(ndx+100),
+                                               [ "Port1", "Port2","Port3"],
+                                              false
+                                             );                                                   
+                                             if(prevBlock!==undefined) {
+                                                prevBlock.ports[0].connectedToId=b.uniqueid;
+                                             }
+                                             prevBlock=b;
+                                             t2[b.uniqueid] = b;
+                }
+        );
+
+        const t3: IBlocks = {};
+        [...Array(12)].forEach( (n, ndx) => { const b = this.createElementInfo(
+                                               this.START_X+ndx*200, 
+                                               350,
+                                               "NewBlock"+(ndx+200),
+                                               [ "Port1", "Port2","Port3"],
+                                              false
+                                             );                                                   
+                                             if(prevBlock!==undefined) {
+                                                prevBlock.ports[0].connectedToId=b.uniqueid;
+                                             }
+                                             prevBlock=b;
+                                             t3[b.uniqueid] = b;
+                }
+        );
+
+        const t4: IBlocks = {};
+        [...Array(12)].forEach( (n, ndx) => { const b = this.createElementInfo(
+                                               this.START_X+ndx*200, 
+                                               500,
+                                               "NewBlock"+(ndx+300),
+                                               [ "Port1", "Port2","Port3"],
+                                              false
+                                             );                                                   
+                                             if(prevBlock!==undefined) {
+                                                prevBlock.ports[0].connectedToId=b.uniqueid;
+                                             }
+                                             prevBlock=b;
+                                             t4[b.uniqueid] = b;
+                }
+        );
+        const blocks = {...this.state.blocks, ...t1, ...t2, ...t3, ...t4 };
         this.setState({blocks});
     }
 
