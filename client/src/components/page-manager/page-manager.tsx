@@ -17,7 +17,7 @@ import { CancelTokenSource } from "axios";
 import {withLanguageListener, ILanguageProps } from "../with-language-listener";
 import { ILanguageInfo } from "../../model/language";
 import { ILocalizationLocal } from "../../service/localization";
-import DragDrop from "../drag-drop";
+import ScriptFlowEdit from "../scriptflow/scriptflow-edit";
 
 interface IProps extends RouteComponentProps, ILanguageProps {
     onLogout(): void;
@@ -183,7 +183,7 @@ class PageManagerInternal extends React.Component<IProps, IState> {
                       <CampaignList />
                    </PrivateRoute>
                    <PrivateRoute exact path="/dragdrop">
-                      <DragDrop />
+                      <ScriptFlowEdit />
                    </PrivateRoute>
                    <PrivateRoute exact path="/epage/:epageid/list">
                       <EPageList />
