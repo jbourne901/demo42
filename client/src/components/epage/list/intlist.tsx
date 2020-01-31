@@ -144,7 +144,7 @@ class EPageIntListInternal extends React.Component<IProps, IState> {
     protected formatHeader(c: IEPageField) {
         const grp = (this.state.epage?.entity+"_list").toLowerCase();
         const locKey = ("column_"+c.label).toLowerCase();
-        const locLabel = this.props.localization.getLocalization(grp, locKey);
+        const locLabel = this.props.localization.getLocalization(grp, locKey) || c.label;
         return (
             <th className="col-md-2" key={c.name}>
                {locLabel}

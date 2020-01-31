@@ -35,6 +35,8 @@ interface IEPageAction {
     query?: string;
     confirm?: string;
     nextpage: string;
+    location: string;
+    style: string;
 }
 
 export class EPageRepository extends Loggable {

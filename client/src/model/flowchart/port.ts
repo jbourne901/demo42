@@ -2,19 +2,28 @@ import ILabelled from "./labelled";
 import FlowchartUtil from "./util";
 import ICoords from "./coords";
 import {BlockUtil, IBlock} from "./block";
+import {IHandle, parseHandle} from "../../model/handle";
+import OrderedList from "../../framework/ordered-list";
 
 export interface IPort extends ILabelled {
-    connectedToId?: string;
+    connectedToId?: IHandle;
 }
 
+export interface IPortInfo extends ILabelled {
+    connectedToId?: IHandle;
+}
+
+export class Ports extends OrderedList<IPort> {
+    
+}
 export interface IPortVars {
     block: IBlock;
-    pointedBlockId?: string;    
-    selectedBlockId?: string;
+    pointedBlockId?: IHandle;
+    selectedBlockId?: IHandle;
     port: IPort;
     portNo: number;
-    pointedPortId?: string;    
-    selectedPortId?: string;
+    pointedPortId?: IHandle; 
+    selectedPortId?: IHandle;
     lastMousePos?: ICoords;
 }
 
@@ -78,6 +87,8 @@ export class PortUtil {
     public static readonly CONN_GAP_X=40;
     public static readonly CONN_ARROW_GAP_X=20;
     public static readonly CONN_GAP_Y=0;
+    public static readonly PORT_TEXT_SYMBOL_WIDTH = 10;
+    public static readonly TEXT_GAP_Y = 2;
 
     public static readonly PORT_Y_INTERVAL = PortUtil.PORT_TEXT_HEIGHT + PortUtil.PORT_GAP_Y;
     public static readonly TXTBORDER_HEIGHT = PortUtil.PORT_TEXT_HEIGHT - PortUtil.TXTBORDER_GAP_Y / 2;
@@ -85,7 +96,7 @@ export class PortUtil {
 
     public static portKey(block: IBlock, p: IPort) {
         const delim = FlowchartUtil.FLD_DELIM;
-        return "block" + delim + block.uniqueid + delim + "port" + delim + p.uniqueid;
+        return "block" + delim + block.handle + delim + "port" + delim + p.handle;
     }
 
     public static knobKey(block: IBlock, p: IPort) {
@@ -109,43 +120,56 @@ export class PortUtil {
     }
 
     public static extractPortId(e: React.BaseSyntheticEvent) {
-        return FlowchartUtil.extractTag(e, "port");
+        const str=FlowchartUtil.extractTag(e, "port");
+        if(str!==undefined && str.length>0) {
+            return parseHandle(str);
+        }
+        return undefined;
+    }
+ 
+
+    protected static isPortPointed(p: IPort, b: IBlock, pointedBlockId?: IHandle, selectedBlockId?: IHandle, pointedPortId?: IHandle, selectedPortId?: IHandle) {
+        return ( pointedBlockId === b.handle && pointedPortId === p.handle );
     }
 
-    public static knobClass(p: IPort, pointedPortId?: string, selectedPortId?: string) {
+    protected static isPortSelected(p: IPort, b: IBlock, pointedBlockId?: IHandle, selectedBlockId?: IHandle, pointedPortId?: IHandle, selectedPortId?: IHandle) {
+        return ( selectedBlockId === b.handle && selectedPortId === p.handle );
+    }
+
+    public static knobClass(p: IPort, b: IBlock, pointedBlockId?: IHandle, selectedBlockId?: IHandle, pointedPortId?: IHandle, selectedPortId?: IHandle) {
        let clsName="block-port-knob";
-       if( pointedPortId === p.uniqueid ) {
+       if( this.isPortPointed(p, b, pointedBlockId, selectedBlockId, pointedPortId, selectedPortId ) ) {
            clsName += " block-port-knob-pointed";
        }
-       if( selectedPortId === p.uniqueid ) {
-           clsName += " block-port-knob-pointed";
+       if( this.isPortSelected(p, b, pointedBlockId, selectedBlockId, pointedPortId, selectedPortId ) ) {
+           clsName += " block-port-knob-selected";
        }
        return clsName;
     }
 
-    public static textClass(p: IPort, pointedPortId?: string, selectedPortId?: string) {
+    public static textClass(p: IPort, b: IBlock, pointedBlockId?: IHandle, selectedBlockId?: IHandle, pointedPortId?: IHandle, selectedPortId?: IHandle) {
         let clsName="block-port-text";
-        if(pointedPortId === p.uniqueid) {
-            clsName+=" block-port-text-pointed";
+        if( this.isPortPointed(p, b, pointedBlockId, selectedBlockId, pointedPortId, selectedPortId ) ) {
+            clsName += " block-port-text-pointed";
         }
-        if(selectedPortId === p.uniqueid) {
-            clsName+=" block-port-text-selected";
+        if( this.isPortSelected(p, b, pointedBlockId, selectedBlockId, pointedPortId, selectedPortId ) ) {
+            clsName += " block-port-text-selected";
         }
-        return clsName;
+         return clsName;
     }
 
-    public static txtBorderClass(p: IPort, pointedPortId?: string, selectedPortId?: string) {
+    public static txtBorderClass(p: IPort, b: IBlock, pointedBlockId?: IHandle, selectedBlockId?: IHandle, pointedPortId?: IHandle, selectedPortId?: IHandle) {
         let clsName="block-port-txtborder";
-        if(pointedPortId === p.uniqueid) {
-            clsName+=" block-port-txtborder-pointed";
+        if( this.isPortPointed(p, b, pointedBlockId, selectedBlockId, pointedPortId, selectedPortId ) ) {
+            clsName += " block-port-txtborder-pointed";
         }
-        if(selectedPortId === p.uniqueid) {
-            clsName+=" block-port-txtborder-selected";
+        if( this.isPortSelected(p, b, pointedBlockId, selectedBlockId, pointedPortId, selectedPortId ) ) {
+            clsName += " block-port-txtborder-selected";
         }
         return clsName;
     }
 
-    public static dragConnClass(p: IPort, pointedPortId?: string, selectedPortId?: string) {
+    public static dragConnClass(p: IPort, b: IBlock, pointedBlockId?: IHandle, selectedBlockId?: IHandle, pointedPortId?: IHandle, selectedPortId?: IHandle) {
         return "block-port-dragconn";
     }
 
@@ -258,7 +282,7 @@ export class PortUtil {
 
     public static knobProps(vars: IPortVars) {        
         const key = PortUtil.knobKey(vars.block, vars.port);
-        const className = PortUtil.knobClass(vars.port, vars.pointedPortId, vars.selectedPortId);
+        const className = PortUtil.knobClass(vars.port, vars.block, vars.pointedBlockId, vars.selectedBlockId, vars.pointedPortId, vars.selectedPortId);
         const knobPoints = PortUtil.knobPoints(vars.block, vars.portNo, vars.port);
         const props: IKnobPros = {key, className, knobPoints};
         return props;
@@ -266,7 +290,7 @@ export class PortUtil {
 
     public static textProps(vars: IPortVars) {
         const key = PortUtil.textKey(vars.block, vars.port);
-        const className = PortUtil.textClass(vars.port, vars.pointedPortId, vars.selectedPortId);
+        const className = PortUtil.textClass(vars.port, vars.block, vars.pointedBlockId,vars.selectedBlockId,  vars.pointedPortId, vars.selectedPortId);
         const textEndX = PortUtil.textEndX(vars.block, vars.port);
         const textBottomY = PortUtil.textBottomY(vars.block, vars.portNo, vars.port);
         const textWidth = PortUtil.textWidth(vars.block, vars.port);
@@ -276,7 +300,7 @@ export class PortUtil {
 
     public static txtBorderProps (vars: IPortVars) {
         const key = PortUtil.txtBorderKey(vars.block, vars.port);
-        const className = PortUtil.txtBorderClass(vars.port, vars.pointedPortId, vars.selectedPortId);
+        const className = PortUtil.txtBorderClass(vars.port, vars.block, vars.pointedBlockId,vars.selectedBlockId,  vars.pointedPortId, vars.selectedPortId);
         const x = PortUtil.txtBorderX(vars.block, vars.port);
         const y = PortUtil.txtBorderY(vars.block, vars.portNo, vars.port);
         const height = PortUtil.txtBorderHeight(vars.port);
@@ -288,15 +312,18 @@ export class PortUtil {
     }
 
     public static dragConnProps(vars: IPortVars) {
+
+        //console.log("dragConnProps vars=");
+        //console.dir(vars);
         
-        if(vars.selectedPortId === vars.port.uniqueid && vars.lastMousePos!== undefined) {
+        if(vars.selectedBlockId === vars.block.handle && vars.selectedPortId === vars.port.handle && vars.lastMousePos!== undefined) {
             const x1=PortUtil.dragConnStartX(vars.block, vars.port);
             const y1=PortUtil.dragConnStartY(vars.block, vars.portNo, vars.port);
             const x2 = vars.lastMousePos.x;
             const y2 = vars.lastMousePos.y;
 
             const dragConnKey = PortUtil.dragConnKey(vars.block, vars.port); 
-            const dragConnClass = PortUtil.dragConnClass(vars.port, vars.pointedPortId, vars.selectedPortId);
+            const dragConnClass = PortUtil.dragConnClass(vars.port, vars.block, vars.pointedBlockId, vars.selectedPortId, vars.pointedPortId, vars.selectedPortId);
             
             const dragConnProps: IDragConnProps = {
                 id:dragConnKey,
@@ -400,4 +427,53 @@ export class PortUtil {
                                         };
         return props;
     }
+
+    public static portsWidth(ports: Ports) {
+        let textWidth = 0;
+        ports.list().forEach( (h) => {
+            const p = ports.safeGet(h);
+            if(p!==undefined) {
+                if(p.label.length > textWidth) {
+                    textWidth = p.label.length;
+                }
+            }
+        });
+        return textWidth * PortUtil.PORT_TEXT_SYMBOL_WIDTH;
+    }
+    
+    public static portsHeight(ports: Ports) {
+       const numPorts = ports.list().length;
+       return numPorts * PortUtil.PORT_TEXT_HEIGHT + 2 * PortUtil.TEXT_GAP_Y;            
+    }
+
+    public static portsToInfo(ports: Ports) {
+        const prts: IPortInfo[] = [];
+        
+        ports.list().forEach( (h) => {
+            const p = ports.safeGet(h);
+            if(p !== undefined) {
+                const {label, handle, connectedToId} = p;
+                const pi: IPortInfo = {
+                    label,
+                    handle,
+                    connectedToId
+                };
+                prts.push(pi);
+            }
+        });
+
+        return prts;
+    }
+
+    public static portTemplate(label: string): IPortInfo {
+        return {
+            label,
+            handle: 0
+        };
+    }
+
+    public static portTemplates(labels: string[]): IPortInfo[] {
+        return labels.map( (l) => PortUtil.portTemplate(l) )
+    }
 }
+

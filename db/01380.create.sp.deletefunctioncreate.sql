@@ -1,7 +1,7 @@
 call TRACE('create SP DeleteFunctionCreate');
 
 create or replace procedure DeleteFunctionCreate(tablename entitytable.table%TYPE)
-as $sp1$
+as $spd1$
 declare
 _sql varchar(1000);
 begin
@@ -9,7 +9,7 @@ begin
 _sql:='
 create or replace function $tablename$DeleteJSON(id "$tablename$".id%TYPE, session TYPE_SESSIONPARAM) 
 returns JSONB
-as $sp2$
+as $spd$
 declare
 _js JSONB;
 _id alias for id;
@@ -22,7 +22,7 @@ select SuccessWithoutPayloadJSON() into _js;
 return _js;
 
 end
-$sp2$
+$spd$
 language plpgsql;
 ';
 
@@ -34,7 +34,7 @@ call TRACE(_sql);
 execute _sql;
 
 end
-$sp1$
+$spd1$
 language plpgsql;
 
 

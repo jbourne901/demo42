@@ -23,8 +23,6 @@ class LanguageListenerInternal extends React.Component<IProps, IState> {
         super(props);        
         this.svc = Service.localization();
         this.state = {};
-        console.log("LocalizationListenerInternal constructor ");
-        console.dir(this.state);
     }
 
     public componentDidMount() {
@@ -43,10 +41,6 @@ class LanguageListenerInternal extends React.Component<IProps, IState> {
     }
 
     public render() {
-        console.log("LanguageListener state=");
-        console.dir(this.state);
-        console.log("props=");
-        console.dir(this.props);
         const language = this.state.language;
         const WrappedComponent = this.props.WrappedComponent;
         return (

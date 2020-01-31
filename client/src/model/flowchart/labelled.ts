@@ -1,4 +1,6 @@
+import {IHandle} from "../handle";
+
 export default interface ILabelled {
     label: string;
-    uniqueid: string;
+    handle: IHandle;
 }

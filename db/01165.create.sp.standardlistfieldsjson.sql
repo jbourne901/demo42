@@ -1,15 +1,16 @@
 call TRACE('create SP StandardListFieldsJSON');
 
-create or replace function StandardListFieldsJSON(fields varchar)
+create or replace function StandardListFieldsJSON(fields varchar, options JSONB default null)
 returns JSONB
 as $$
 declare
 _js JSONB;
+
 begin
 
 _js:='{}';
 
-select json_agg( StandardListFieldFromTextJSON(splitstring, '/') )from (select * from SplitString(fields, ',')) q into _js;
+select json_agg( StandardListFieldFromTextJSON(splitstring, '/', options) )from (select * from SplitString(fields, ',')) q into _js;
 
 return _js;
 

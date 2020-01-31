@@ -33,6 +33,19 @@
 }
 
 
+.palette-text {
+    stroke:black; 
+    fill:gray;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 22px;
+}
+
+.palette-header {
+    fill: rgb(231, 231, 231);
+    stroke: blue;
+    stroke-width:0.5;    
+}
+
 .block-rect {
     fill: white
 }
@@ -121,4 +134,12 @@
 .block-conn-line3 {
     stroke: red;
     stroke-width: 2;
+}
+
+.flowchart-container {
+    overflow: scroll;
+}
+
+.flowchart-pane {
+    height: 600px !important;
 }

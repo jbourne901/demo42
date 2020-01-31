@@ -1,7 +1,7 @@
 call TRACE('create SP ListFunctionCreate');
 
 create or replace procedure ListFunctionCreate(tablename entitytable.table%TYPE)
-as $sp1$
+as $spl1$
 declare
 _sql varchar(1000);
 begin
@@ -9,7 +9,7 @@ begin
 _sql:='
 create or replace function $tablename$ListJSON( session TYPE_SESSIONPARAM )
 returns JSONB
-as $sp2$
+as $spc2$
 declare
 _js JSONB;
 begin
@@ -18,7 +18,7 @@ begin
    select SuccessWithPayloadJSON(_js) into _js; 
    return _js;
 end
-$sp2$
+$spc2$
 language plpgsql;
 ';
 
@@ -29,7 +29,7 @@ call TRACE(_sql);
 execute _sql;
 
 end
-$sp1$
+$spl1$
 language plpgsql;
 
 

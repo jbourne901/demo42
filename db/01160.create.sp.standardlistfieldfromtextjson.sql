@@ -1,6 +1,6 @@
 call TRACE('create SP StandardListFieldFromTextJSON');
 
-create or replace function StandardListFieldFromTextJSON(str text, delim varchar(10))
+create or replace function StandardListFieldFromTextJSON(str text, delim varchar(10), options JSONB default null)
 returns JSON
 as $$
 declare
@@ -12,9 +12,12 @@ begin
 select split_part(str, delim,1) into _name;
 select split_part(str, delim,2) into _label;
 
+
 _js:='{}';
 _js:=jsetstr(_js, 'name',_name);
 _js:=jsetstr(_js, 'label',_label);
+
+_js := SafeMergeOptionsJSON( options, _name, _js);
 
 return _js;
 

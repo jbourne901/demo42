@@ -86,6 +86,14 @@ CREATE DOMAIN TYPE_EPAGEACTIONCONFIRM varchar(200);
 drop domain if exists TYPE_EPAGEACTIONISITEMACTION;
 CREATE DOMAIN TYPE_EPAGEACTIONISITEMACTION bool;
 
+drop domain if exists TYPE_EPAGEACTIONLOCATION;
+CREATE DOMAIN TYPE_EPAGEACTIONLOCATION varchar(50);
+
+drop domain if exists TYPE_EPAGEACTIONSTYLE;
+CREATE DOMAIN TYPE_EPAGEACTIONSTYLE varchar(50);
+
+
+
 call TRACE('create table epageaction');
 
 create table epageaction (
@@ -99,6 +107,8 @@ create table epageaction (
   isitemaction TYPE_EPAGEACTIONISITEMACTION NOT NULL default false,
   ordno int NOT NULL,
   epageid TYPE_EPAGEID,
+  location TYPE_EPAGEACTIONLOCATION,
+  style TYPE_EPAGEACTIONSTYLE,
   FOREIGN KEY(epageid) references epage(id) on delete cascade
 );
 

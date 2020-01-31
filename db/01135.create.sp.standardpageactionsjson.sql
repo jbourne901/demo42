@@ -1,6 +1,6 @@
 call TRACE('create SP StandardPageActionsJSON');
 
-create or replace function StandardPageActionsJSON(entity varchar(40))
+create or replace function StandardPageActionsJSON(entity varchar(40), options JSONB default null)
 returns JSONB
 as $$
 declare
@@ -13,6 +13,12 @@ begin
 select * from StandardAddActionJSON(entity) into _add;
 select * from StandardEditActionJSON(entity) into _edit;
 select * from StandardDeleteActionJSON(entity) into _delete;
+
+_add := SafeMergeOptionsJSON(options, 'add', _add);
+_edit := SafeMergeOptionsJSON(options, 'edit', _edit);
+_delete := SafeMergeOptionsJSON(options, 'delete', _delete);
+
+
 
 _js:='[]';
 _js:= jarraddjson(_js, _add);

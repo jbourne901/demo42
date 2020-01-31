@@ -1,21 +1,32 @@
 call TRACE('create SP StandardListPageJSON');
 
-create or replace function StandardListPageJSON(entity varchar(40), label epage.label%TYPE, _fieldstr text)
+create or replace function StandardListPageJSON(entity varchar(40), label epage.label%TYPE, _fieldstr text, options JSONB default null)
 returns JSONB
 as $$
 declare
 _js JSONB;
 _fields JSONB;
 _pageactions JSONB;
+actionsoptions JSONB;
+pageoptions JSONB;
+fieldsoptions JSONB;
 begin
 
 --_js:='{ "name": "user", "type":"list", "label": "Users (EPage)", "query": "UserListJSON()",  "pkname": "id" }';
 --_js:=jsetjson(_js, 'fields', _fields);
 --_js:=jsetjson(_js, 'pageactions', _pageactions);
 
-select * from StandardPageActionsJSON(entity) into _pageactions;
+if options is not null then
+  actionsoptions := options->'actions';
+  pageoptions := options->'page';
+  fieldsoptions := options->'fields';
+end if;
 
-select * from StandardListFieldsJSON(_fieldstr) into _fields;
+
+
+select * from StandardPageActionsJSON(entity, actionsoptions) into _pageactions;
+
+select * from StandardListFieldsJSON(_fieldstr, fieldsoptions) into _fields;
 
 _js:='{"type":"list",  "pkname": "id" }';
 select * from jsetstr(_js, 'name', entity) into _js;

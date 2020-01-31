@@ -38,9 +38,10 @@ select epage.id into _id from epage where name=_name;
 insert into epagefield(name,label,epageid,ordno, type)
 select name,label,_id,row_number() over() ordno, type from json_to_recordset(_fields::json) as x(name TYPE_EPAGEFIELDNAME, label TYPE_EPAGEFIELDLABEL, type TYPE_EPAGEFIELDTYPE);
 
-insert into epageaction(name,label,epageid,ordno,type,query,isitemaction, nextpage, confirm)
-select name,label,_id,row_number() over() ordno, type, query, coalesce(isitemaction, false), nextpage, confirm from json_to_recordset(_pageactions::json) 
-       as x(name TYPE_EPAGEACTIONNAME, label TYPE_EPAGEACTIONLABEL, type TYPE_EPAGEACTIONTYPE, query TYPE_EPAGEACTIONQUERY, isitemaction TYPE_EPAGEACTIONISITEMACTION, nextpage TYPE_EPAGENAME, confirm TYPE_EPAGEACTIONCONFIRM);
+insert into epageaction(name,label,epageid,ordno,type,query,isitemaction, nextpage, confirm, location, style)
+select name,label,_id,row_number() over() ordno, type, query, coalesce(isitemaction, false), nextpage, confirm, location, style from json_to_recordset(_pageactions::json) 
+       as x(name TYPE_EPAGEACTIONNAME, label TYPE_EPAGEACTIONLABEL, type TYPE_EPAGEACTIONTYPE, query TYPE_EPAGEACTIONQUERY, isitemaction TYPE_EPAGEACTIONISITEMACTION, 
+            nextpage TYPE_EPAGENAME, confirm TYPE_EPAGEACTIONCONFIRM, location TYPE_EPAGEACTIONLOCATION, style TYPE_EPAGEACTIONSTYLE);
 
 
 select jsetint('{}', 'id',  _id) into _js;

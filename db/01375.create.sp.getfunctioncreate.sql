@@ -1,7 +1,7 @@
 call TRACE('create SP GetFunctionCreate');
 
 create or replace procedure GetFunctionCreate(tablename entitytable.table%TYPE)
-as $sp1$
+as $spg1$
 declare
 _sql varchar(1000);
 begin
@@ -9,7 +9,7 @@ begin
 _sql:='
 create or replace function $tablename$GetJSON(id "$tablename$".id%TYPE, session TYPE_SESSIONPARAM) 
 returns JSONB
-as $sp2$
+as $spg$
 declare
 _js JSONB;
 _id alias for id;
@@ -26,7 +26,7 @@ end if;
 return _js;
 
 end
-$sp2$
+$spg$
 language plpgsql;
 ';
 
@@ -38,7 +38,7 @@ call TRACE(_sql);
 execute _sql;
 
 end
-$sp1$
+$spg1$
 language plpgsql;
 
 

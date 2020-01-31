@@ -1,6 +1,6 @@
 call TRACE('create SP StandardEditActionsJSON');
 
-create or replace function StandardEditActionsJSON(entity varchar(40), isadd bool)
+create or replace function StandardEditActionsJSON(entity varchar(40), isadd bool, options JSONB default null)
 returns JSONB
 as $$
 declare
@@ -13,6 +13,11 @@ _js := '[]';
 
 select * from StandardSaveActionJSON(entity, isadd) into _save;
 select * from StandardCancelActionJSON(entity) into _cancel;
+
+
+_save := SafeMergeOptionsJSON(options, 'save', _save);
+_cancel := SafeMergeOptionsJSON(options, 'cancel', _cancel);
+
 
 _js := jarraddjson(_js, _save);
 _js := jarraddjson(_js, _cancel);

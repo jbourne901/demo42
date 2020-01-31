@@ -16,6 +16,8 @@ export interface IEPageAction {
     isitemaction: boolean;
     query: string;
     confirm: string;
+    location: string;
+    style: string;
 }
 
 export interface IEPageField {

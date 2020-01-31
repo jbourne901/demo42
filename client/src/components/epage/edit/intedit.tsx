@@ -10,6 +10,9 @@ import Service from '../../../service';
 import {CancelTokenSource} from "axios";
 import {withLanguageListener, ILanguageProps } from '../../with-language-listener/with-language-listener';
 import { ILanguageInfo } from '../../../model/language';
+import FlowchartEdit from '../../flowchart/edit';
+import {BlockUtil} from "../../../model/flowchart/block";
+import IFlowchart from '../../../model/flowchart';
 
 interface IProps extends RouteComponentProps, ILanguageProps {
     epageid: string;
@@ -128,6 +131,10 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         this.serviceError("Error");
     }
 
+    protected onFlowChange(name: string, val: IFlowchart) {
+       this.setChanged(name, val);
+    }
+
     protected formatField(f: IEPageField) {        
         const epage = this.state.epage;
         let epageid = "";
@@ -135,11 +142,11 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
             epageid = epage.id;            
         }
         const key = epageid + "_" + f.name;
-        let value = "";
+        let value;
         const entity = this.state.entity;
         let error = "";
         if(entity) {
-            value = entity[f.name] || "";
+            value = entity[f.name];
         }
         error = this.state.errors[f.name];
         const type = f.type || "text";
@@ -154,17 +161,39 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
             localizedError = tmp1;
         }
 
-        return (
-            <EditField key={key} label={localizedLabel} name={f.name} value={value} type={type}
-               error={localizedError}
-               onChange={ (e) => this.onChange(e) }
-            />
-        );
+        let fld = null;
+        if(type==='flowchart') {
+            //temporarily:
+            const templates = [ BlockUtil.template0("Menu"), 
+                                BlockUtil.template0("Schedule"),
+                                BlockUtil.template0("condition")
+                              ];
+            fld = (
+                <FlowchartEdit key={key} label={localizedLabel} name={f.name}
+                   value={value} error={localizedError} templates={templates}
+                   onFlowChange={ (val) => this.onFlowChange(f.name, val) }
+                /> 
+            );
+        } else {
+            fld = (
+                <EditField key={key} label={localizedLabel} name={f.name} value={value} 
+                   type={type}
+                   error={localizedError}
+                   onChange={ (e) => this.onChange(e) }
+                />
+            );    
+        }
+        return fld;
+
     }
 
     protected onChange(e: React.ChangeEvent<HTMLInputElement>) {
         const name = e.target.name;
         const value = e.target.value;
+        return this.setChanged(name, value);
+    }
+
+    protected setChanged(name: string, value: any) {
 
         const entity = {...(this.state.entity || {}) };
         const errors = {...this.state.errors};
@@ -264,22 +293,31 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
 
         const grp = (this.state.epage.entity).toLowerCase();        
         const header = epage.label.toLowerCase();
-        const localizedHeader = this.props.localization.getLocalization(grp, header) || "Edit";
+        console.log("0000000000 header="+header);
+        const localizedHeader = this.props.localization.getLocalization(grp, header) || epage.label || "Edit";
         
         return (
-            <div className="container col-md-6">
+            <div className="container">
                 <h2>{localizedHeader}</h2>
                 <form onSubmit={ (e:React.FormEvent<HTMLFormElement>) =>
                                          this.onSubmit(e) 
                                }
                 >
+                    <hr/>
+
+                    <div className="form-group-control">
+                        {actions.map( (a) => a.location === 'top' && this.formatAction(a))}
+                    </div>
+
+                    <hr/>
+
                     {fields.map( (f)=> this.formatField(f))}
                     <div>
                         <ValidationError name="error" error={error} />
                     </div>
                     <hr />
                     <div className="form-group-control">
-                        {actions.map( (a) => this.formatAction(a))}
+                        {actions.map( (a) => a.location !== 'top' && this.formatAction(a))}
                     </div>
                 </form>
             </div>

@@ -1,118 +1,156 @@
 import React from 'react';
-import shortid from 'shortid';
 import "./edit.css";
+import {IHandle} from "../../../model/handle";
 import ICoords from "../../../model/flowchart/coords";
-import {IPort, PortUtil, IPortVars} from "../../../model/flowchart/port";
-import {IBlock, IBlockLayout, IBlocks, BlockUtil, IBlockRenderVars} from "../../../model/flowchart/block";
+import {IPort, PortUtil, IPortVars, Ports, IPortInfo} from "../../../model/flowchart/port";
+import {IBlock, IBlockInfo, IBlockLayout, Blocks, BlockUtil, IBlockRenderVars} from 
+        "../../../model/flowchart/block";
 import {IBlockTemplate} from "../../../model/flowchart/template";
+import FlowchartUtil from '../../../model/flowchart/util';
+import ValidationError from '../../validation-error';
+import IFlowchart from '../../../model/flowchart';
 
+
+// state-changing operations:
+// initial population of templates
+// initial population of blocks (when opening an existing flow)
+// select block and port (when clicking on block, port or connection)
+// unselect block and port when clicking outside of block, port and connection
+// select block only (when clickng on block but not on port)
+// cancel drag (when releasing mouse button not after dragging )
+// finalize move (when releasing mouse button after dragging an instance block)
+// undo move block (when releasing mouse button after dragging an instance block outside of canvas)
+// undo move template block (when releasing mouse button after dragging a template block)
+// instantiate block from template (when releasing mouse button after dragging a template block inside canvas)
+// create connection (when releasing mouse button after dragging a port)
+// unhighlight port when moving mouse with no button pressed outside of port/connection
+// unhighlight block and port when moving mouse with no button pressed outside of port/connection/block
 
 interface IProps {
-    templates: IBlockTemplate[]
+    label: string;
+    name: string;
+    value: IFlowchart;
+    error: string;
+    templates: IBlockTemplate[];
+    onFlowChange(value: IFlowchart): void;
+
 };
 
+
 interface IState {
-    selectedBlockId?: string;
-    pointedBlockId?: string;
+    selectedBlockId?: IHandle;
+    pointedBlockId?: IHandle;
     offset?: ICoords;
     lastMousePos?: ICoords;
-    selectedPortId?: string;
-    pointedPortId?: string;
+    hasBeenDragged: boolean;
+    selectedPortId?: IHandle;
+    pointedPortId?: IHandle;
     selectedPortX?: number;
     selectedPortY?: number;
-    blocks: IBlocks;
+    blocks: Blocks;
 }
 
 class FlowchartEditInternal extends React.Component<IProps, IState> {
 
-    private readonly START_X=200;
-    private readonly START_Y=200;
-    private readonly BLOCK_RADIUS=10;
     private readonly VIEW_X=0;
     private readonly VIEW_Y=0;
     private readonly VIEW_WIDTH=3000;
     private readonly VIEW_HEIGHT=2000;
     private readonly PALETTE_WIDTH=200;
+    private readonly PALETTE_TEXT_HEIGHT=20;
+    private readonly PALETTE_HEADER_GAP_Y=10;
     private readonly PALETTE_HEIGHT=2000;
-    private readonly CANVAS_WIDTH=this.VIEW_WIDTH-this.PALETTE_WIDTH;
-    private readonly CANVAS_HEIGHT=2000;
+    private readonly PALETTE_HEADER_HEIGHT=50;
     private readonly TEMPLATE_GAP_X=20;
     private readonly TEMPLATE_GAP_Y=20;
-    private readonly BLOCK_GAP=10;
-
-    private NEXT_BLOCK_ID=1;
-    
 
     constructor(props: IProps) {
         super(props);
+        const blocks = new Blocks("Blocks", 0);
         this.state = {
-            blocks: {}
+            blocks,
+            hasBeenDragged: false
         };
     }
 
     componentDidMount() {        
-        const blocks : IBlocks = this.props.templates.reduce( 
-                 (bs: IBlocks, t: IBlockTemplate, ndx: number) => {
-                        const b = this.createBlockTemplateInfo(t, ndx);                        
-                        return {...bs, [b.uniqueid]: b}
-                 },
-                 {}
-        );
-        //const elements = this.props.templates.map( (t, ndx) => this.createBlockTemplateInfo(t, ndx));
-
+        const blocks : Blocks = new Blocks("Blocks", FlowchartUtil.MAX_BLOCKS);
+        this.props.templates.forEach( (t: IBlockTemplate, ndx: number) => {
+            this.createTemplateBlock(blocks, t, ndx);                        
+        });
+        console.log("componentDidMount value=");
+        console.dir(this.props.value);
+        const originalHandles: { [handle: string]: IHandle } = {};
+        if(this.props.value !== undefined && this.props.value !== null) {
+            this.props.value.forEach( (t: IBlockInfo) => {
+                const strh = t.handle.toString();
+                const newBlock = this.createBlock(blocks, t.x, t.y, t.label, t.ports, false);
+                if(newBlock !== undefined ) {
+                    originalHandles[strh]=newBlock.handle;
+                    console.log("newBlock originalHandle "+strh + "="+ newBlock.handle);
+                }                
+            })
+        }
+        console.log("blocks = ");
+        console.dir(blocks.list());
+        blocks.list().forEach( (h) => {
+            const b = blocks.safeGet(h);
+            if(b!==undefined && !b.isTemplate && b.ports!==undefined) {
+                console.log("bbb=");
+                console.dir(b);
+                b.ports.list().forEach( (ph) => {
+                    const p = b.ports.safeGet(ph);
+                    if(p!==undefined && p.connectedToId !== undefined) {
+                        const newHandle = originalHandles[p.connectedToId];
+                        console.log("connection to originalHandle "+p.connectedToId+" = "+newHandle);
+                        p.connectedToId = newHandle;
+                    }
+                })
+            }
+        })
         this.setState({blocks});
     }
 
     
- 
-    
     protected eventTargetBlock(e: React.MouseEvent) {
-        let blockId = BlockUtil.extractBlockId(e);
-        if(blockId === undefined ) {
+        let blockHandle = BlockUtil.extractBlockId(e);
+        let block;
+        if(blockHandle !== undefined && blockHandle>=0) {
+            block = this.state.blocks.get(blockHandle);
+        }
+        if(block === undefined ) {
             const mousePos = this.getMousePosition(e);
-            blockId = this.findBlockByCoords(mousePos.x, mousePos.y);
+            block = this.findBlockByCoords(mousePos.x, mousePos.y);            
         }
-        if(blockId !== undefined && blockId.length>0) {
-            return this.state.blocks[blockId];
-        }
-        return undefined;
+        return block;
      }
 
      protected findBlockByCoords(x: number, y: number) {
-         const blocks=Object.values(this.state.blocks);
-         const ndx = blocks.findIndex( (b) => BlockUtil.isWithinFrame(b, x, y) );         
-         if(ndx>=0) {
-            const blockId = blocks[ndx].uniqueid;
-            return blockId;
-         }
-         return undefined;
+         //const blocks=Object.values(this.state.blocks);
+         const blocks = this.state.blocks;
+         return blocks.findFirst( (b: IBlock) => BlockUtil.isWithinFrame(b, x, y) );
      }
 
     protected eventTargetPort(e: React.MouseEvent) {
-        const blockId = BlockUtil.extractBlockId(e);
-        const portId = PortUtil.extractPortId(e);
-        if(blockId !== undefined && blockId.length>0 && portId!==undefined && portId.length>0) {
-            const block = this.state.blocks[blockId];
-            if(block !== undefined) {
-                const index = block.ports.findIndex( (p) => p.uniqueid === portId);
-                if(index>=0) {
-                    return block.ports[index];
-                }    
-            }
+        const blockHandle = BlockUtil.extractBlockId(e);
+        const portHandle = PortUtil.extractPortId(e);
+        const block = this.state.blocks.safeGet(blockHandle);
+        if(block !== undefined) {
+            return block.ports.safeGet(portHandle);
         }
         return undefined;
     }
- 
-    protected findPortIndexPlus1(element: IBlock, uniqueid?: string) {
-        if(element && uniqueid) {
-            const ndx = element.ports.findIndex( (e) => e.uniqueid === uniqueid);
-            if (ndx>=0) {
-                return ndx+1;
-            }    
-        }
-        return 0;
-    }
 
+    
+    protected eventTargetConn(e: React.MouseEvent) {
+        const id: string = (e.target as any).id;
+        if(id.indexOf("conn") >=0 ) {
+            return e;
+        }
+        return undefined;
+    }
+  
+  
     protected isInCanvas(block: IBlock) {
         if (block.x >= this.VIEW_X + this.PALETTE_WIDTH) {
             return true;
@@ -128,21 +166,25 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
         };
     }
 
-    protected setBlockAndPortSelected(block: IBlock, port: IPort, otherStateFields: any) {
-        const blockId = block.uniqueid;
-        const portId = port.uniqueid;
+    protected setBlockAndPortSelected(block: IBlock, port: IPort, lastMousePos: ICoords) {
+        const blockId = block.handle;
+        const portId = port.handle;
+        const blocks = this.state.blocks;
+        blocks.moveToEnd(blockId);
         return this.setState({
-            ...otherStateFields,
+            offset: undefined,
+            lastMousePos,
+            blocks,
             selectedBlockId: blockId,
             selectedPortId: portId,
         });
-
     }
 
     protected onMouseDown(e: React.MouseEvent) {
         e.persist();
         const clickedBlock = this.eventTargetBlock(e);
         if ( clickedBlock === undefined) {
+            console.log("mousedown outside of block - clearBlockSelectionState");
             return this.setState( this.clearBlockSelectionState() );
         }
         e.preventDefault();
@@ -150,19 +192,36 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
         
         const clickedPort = this.eventTargetPort(e);
         if(clickedPort !== undefined) {
-            return this.setBlockAndPortSelected(clickedBlock, clickedPort, { lastMousePos, offset: undefined} );
+            console.log("mousedown - clickedPort = "+clickedPort.label+" set selected block and port "+clickedBlock.label+" "+clickedPort?.label);
+            return this.setBlockAndPortSelected(clickedBlock, clickedPort, lastMousePos );
+        }
+
+        const clickedConn = this.eventTargetConn(e);
+        if(clickedConn !== undefined) {
+            const hBlock = BlockUtil.extractBlockId(clickedConn);
+            const hPort = PortUtil.extractPortId(clickedConn);
+            const connBlock = this.state.blocks.safeGet(hBlock);
+            const connPort = this.state.blocks.safeGet(hPort);
+            if(connBlock!==undefined && connPort !== undefined) {
+                console.log("mousedown - clicked Conn port = "+connPort.label+" set selected block and port "+connBlock.label+" "+connPort.label);
+                return this.setBlockAndPortSelected(connBlock, connPort, lastMousePos );    
+            }
         }
 
         const offset: ICoords = lastMousePos;
         offset.x -= parseFloat(""+clickedBlock.x);
         offset.y -= parseFloat(""+clickedBlock.y);
 
-        this.setBlockOnlySelected(clickedBlock, {offset, lastMousePos});
+        console.log("mousdown - clickedblock="+clickedBlock.label+" set selected block only");
+        //this.setBlockOnlySelected(clickedBlock, {offset, lastMousePos});
+        this.setBlockOnlySelected(clickedBlock, {offset});
     }
 
     protected setBlockOnlySelected(block: IBlock, otherStateFields: any) {
+        const blocks = this.state.blocks;
+        blocks.moveToEnd(block.handle);
         return this.setState({ ...otherStateFields,
-                               selectedBlockId: block.uniqueid,
+                               selectedBlockId: block.handle,
                                selectedPortId: undefined,
                              });
     }
@@ -181,7 +240,8 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
     protected dragEndState() {
         return {
             offset: undefined,
-            lastMousePos: undefined
+            lastMousePos: undefined,
+            hasBeenDragged: false   
         };
     }
 
@@ -206,6 +266,7 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
 
         if(this.isDraggingPort()) {
             const dropOnBlock = this.eventTargetBlock(e);
+            console.log("mouseUp - isDragginPort - dropOnBlock=");
             console.dir(dropOnBlock);
 
             if (dropOnBlock !== undefined) {
@@ -228,7 +289,7 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
     protected getSelectedBlock() {
         const selectedBlockId = this.state.selectedBlockId;
         if( selectedBlockId !== undefined) {
-            return this.state.blocks[selectedBlockId];
+            return this.state.blocks.get(selectedBlockId);
         }
         return undefined;
     }
@@ -241,15 +302,13 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
         if(block === undefined) {
             return undefined;
         }        
-        const ndx = block.ports.findIndex( (p) => p.uniqueid === this.state.selectedPortId);
-        if(ndx<0) {
-            return undefined;
-        }
-        return block.ports[ndx];
+        return block.ports.get(this.state.selectedPortId);
     }
 
     protected isDraggingPort() {
-        if(this.state.selectedPortId !== undefined && this.state.lastMousePos !== undefined) {
+        if(this.state.selectedPortId !== undefined && 
+           this.state.lastMousePos !== undefined
+          ) {
             return true;
         }
         return false;
@@ -262,42 +321,30 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
         return false;
     }
 
-        /*
-        if ( selectedBlock !== undefined) {
-            if(selectedBlock.isTemplate) {
-                return this.releaseTemplate(selectedBlock);
-            } 
-            if(this.isInCanvas(el)) {
-                if(this.state.selectedPortId!==undefined && this.state.lastMousePos !== undefined) {
-                    return this.connectPort(el);
-                }
-            } else {
-                    return this.undoMoveBlock(selectedBlock, {offset: undefined, lastMousePos: undefined})
-            }
-        }        
-    */
-
     protected undoMoveBlock(block: IBlock, otherStateFields: any) {
-        const blockId = block.uniqueid;
         const updatedBlock = {...block, x: block.lastX, y: block.lastY};
-        const blocks = {...this.state.blocks, [blockId]: updatedBlock};
+        const blocks = this.state.blocks;
+        blocks.update(updatedBlock.handle, updatedBlock);
 
         return this.setState({...otherStateFields, blocks });
     }
 
     protected dropTemplateBlock(el: IBlock) {
         const updatedEl = {...el, x: el.lastX, y: el.lastY};
-        let blocks = {...this.state.blocks, [el.uniqueid]: updatedEl };
-
+        const blocks = this.state.blocks;
+        blocks.update(updatedEl.handle, updatedEl);
+        
         if( this.isInCanvas(el) ) {
-            const newBlock = this.instantiateTemplate(el);
-            if(newBlock !== undefined ) {
-                blocks = {...blocks, [newBlock.uniqueid]: newBlock};
-            }                    
+            this.instantiateTemplate(blocks, el);
+            this.setState({ ...(this.dragEndState()),
+                blocks                              
+            });
+            this.notifyChange();
+            return;
         }
-        return this.setState({ ...(this.dragEndState()),
-                               blocks                              
-                             });
+        this.setState({ ...(this.dragEndState()),
+                        blocks                              
+                      });
     }
 
     protected dropInstanceBlock(block: IBlock) {
@@ -310,29 +357,28 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
     protected connectPort(toBlock: IBlock) {
         const fromPort = this.getSelectedPort();
         const fromBlock = this.getSelectedBlock();
-        console.log("yyyyyyyyy connectPort from="+fromBlock?.uniqueid + " to = " + toBlock.uniqueid);
-        if(fromBlock !== undefined && toBlock !== undefined && fromPort !== undefined) {            
-            const fromBlockId = fromBlock.uniqueid;
-            const fromPortId = fromPort.uniqueid;
+        if(fromBlock !== undefined && toBlock !== undefined && fromPort !== undefined) {
+            if(fromBlock.handle === toBlock.handle && !this.state.hasBeenDragged) {
+                console.log("connecting to the same block but has not dragged - skipping");
+                return this.setState( this.dragEndState() );
+            }
             const updatedFromPort = {...fromPort};
-            updatedFromPort.connectedToId=toBlock.uniqueid;
-            const updatedPorts = fromBlock.ports.map( (p) => (p.uniqueid===fromPortId)? updatedFromPort : p);
+            updatedFromPort.connectedToId=toBlock.handle;
+            const updatedPorts = fromBlock.ports;
+            updatedPorts.update(updatedFromPort.handle, updatedFromPort);
+            
             const updatedFromBlock = {...fromBlock, ports: updatedPorts};
-            const blocks = {...this.state.blocks, [fromBlockId]: updatedFromBlock};
-            return this.setState({ ...(this.dragEndState()),
+            const blocks = this.state.blocks;
+            blocks.update(updatedFromBlock.handle, updatedFromBlock);
+            this.setState({ ...(this.dragEndState()),
                                    blocks
-                                });        
+                                }); 
+            this.notifyChange();
+            return;
         }
         return this.setState( this.dragEndState() );
     }
  
-
-    protected blockPort(label: string) {
-        return {
-            label
-        };
-    }
-
     protected getTemplate(label: string) {
         const ndx = this.props.templates.findIndex( (t) => t.label === label);
         if(ndx>=0) {
@@ -341,32 +387,26 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
         return undefined;
     }
 
-    protected instantiateTemplate(templateBlock: IBlock) {
+    protected instantiateTemplate(blocks: Blocks, templateBlock: IBlock) {
         const template = this.getTemplate(templateBlock.label);
-        if(template) {
+        const maxBlockHandle = blocks.getMaxAllocatedHandle();
+        if(template!==undefined) {
             const {x,y} = templateBlock;
-            const newBlock = this.createElementInfo(x, y,
-                  template.label+"_"+this.nextBlockId(),
-                  template.ports,
-                  false
-            );
-            return newBlock;    
+            this.createBlock(blocks, x, y, template.label+"_"+maxBlockHandle,template.ports);
         }
-        return undefined;
     }
-
-    protected nextBlockId() {
-        this.NEXT_BLOCK_ID+=1;
-        return this.NEXT_BLOCK_ID;
-    }
-
+ 
     protected moveBlock(block: IBlock, pos: ICoords) {
         const offset = this.state.offset || {x: 0, y: 0};
         const x = pos.x - offset.x;
         const y = pos.y - offset.y;
         const updatedBlock = {...block, x, y};
-        const blocks = {...this.state.blocks, [updatedBlock.uniqueid]: updatedBlock};
-        return this.setState({blocks, lastMousePos: pos});
+        const blocks = this.state.blocks;
+        blocks.update(updatedBlock.handle, updatedBlock);
+        //return this.setState({blocks, lastMousePos: pos});
+        this.setState({blocks});
+        this.notifyChange();
+        return;
     }
 
     // selectedBlock = undefined , buttons not held - check / update pointed block/port
@@ -383,7 +423,7 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
 
         const lastMousePos = this.getMousePosition(e);
         if (this.isDraggingPort() && e.buttons === 1) { 
-            return this.setState({lastMousePos});
+            return this.setState({lastMousePos, hasBeenDragged: true});
         }
 
         if (this.isDraggingBlock() && e.buttons === 1) {
@@ -398,13 +438,19 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
             const pointedPort = this.eventTargetPort(e);
             return this.setPointedBlockPort(pointedBlock, pointedPort);
         }
+        if(this.state.pointedBlockId !== undefined || this.state.pointedPortId === undefined) {
+            return this.setState({
+                pointedBlockId: undefined,
+                pointedPortId: undefined
+            });    
+        }
     }
 
     protected setPointedBlockPort(pointedBlock: IBlock, pointedPort?: IPort) {
-        let pointedBlockId = pointedBlock.uniqueid;
+        let pointedBlockId = pointedBlock.handle;
         let pointedPortId;
         if(pointedPort !== undefined) {
-            pointedPortId = pointedPort.uniqueid;
+            pointedPortId = pointedPort.handle;
         }
         if( this.state.pointedBlockId !== pointedBlockId) {
             console.log("setPointedBlockAndPort block = "+pointedBlock.label + " port="+pointedPort?.label);
@@ -423,97 +469,65 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
     }
 
     protected addBlock() {
-//        const newBlock = this.createElementInfo(this.START_X, this.START_Y, "NewBlock", [ "Port1", "Port2","Port3"], false);
-        const t1: IBlocks = {};
-        let prevBlock: IBlock;
-        [...Array(12)].forEach( (n, ndx) => { const b = this.createElementInfo(
-                                                      this.START_X+ndx*200, 
-                                                      20,
-                                                      "NewBlock"+ndx,
-                                                      [ "Port1", "Port2","Port3"],
-                                                      false
-                                                   );
-                                              if(prevBlock!==undefined) {
-                                                  prevBlock.ports[0].connectedToId=b.uniqueid;
-                                              }
-                                              prevBlock=b;
-                                        t1[b.uniqueid] = b;
-                                      }
-                            );
-
-        const t2: IBlocks = {};
-        [...Array(12)].forEach( (n, ndx) => { const b = this.createElementInfo(
-                                               this.START_X+ndx*200, 
-                                               200,
-                                               "NewBlock"+(ndx+100),
-                                               [ "Port1", "Port2","Port3"],
-                                              false
-                                             );                                                   
-                                             if(prevBlock!==undefined) {
-                                                prevBlock.ports[0].connectedToId=b.uniqueid;
-                                             }
-                                             prevBlock=b;
-                                             t2[b.uniqueid] = b;
-                }
-        );
-
-        const t3: IBlocks = {};
-        [...Array(12)].forEach( (n, ndx) => { const b = this.createElementInfo(
-                                               this.START_X+ndx*200, 
-                                               350,
-                                               "NewBlock"+(ndx+200),
-                                               [ "Port1", "Port2","Port3"],
-                                              false
-                                             );                                                   
-                                             if(prevBlock!==undefined) {
-                                                prevBlock.ports[0].connectedToId=b.uniqueid;
-                                             }
-                                             prevBlock=b;
-                                             t3[b.uniqueid] = b;
-                }
-        );
-
-        const t4: IBlocks = {};
-        [...Array(12)].forEach( (n, ndx) => { const b = this.createElementInfo(
-                                               this.START_X+ndx*200, 
-                                               500,
-                                               "NewBlock"+(ndx+300),
-                                               [ "Port1", "Port2","Port3"],
-                                              false
-                                             );                                                   
-                                             if(prevBlock!==undefined) {
-                                                prevBlock.ports[0].connectedToId=b.uniqueid;
-                                             }
-                                             prevBlock=b;
-                                             t4[b.uniqueid] = b;
-                }
-        );
-        const blocks = {...this.state.blocks, ...t1, ...t2, ...t3, ...t4 };
+        let prevBlock;
+        const blocks = this.state.blocks;
+        prevBlock = this.addTestBlocks(blocks, 12, 20, 0, prevBlock);
+        prevBlock = this.addTestBlocks(blocks, 12, 200, 100, prevBlock);
+        prevBlock = this.addTestBlocks(blocks, 12, 350, 200, prevBlock);
+        prevBlock = this.addTestBlocks(blocks, 12, 500, 300, prevBlock);
+        console.log(prevBlock);
         this.setState({blocks});
+        this.notifyChange();
+        return;
     }
 
-    protected createElementInfo(x: number, y: number, label: string, strports: string[], isTemplate: boolean) {
-        const uniqueid = shortid.generate();
-        const ports = strports.map( (s) => {
-             const portId = shortid.generate();
-             const port: IPort = {label: s, uniqueid: portId};
-             return port;
+    protected addTestBlocks(blocks: Blocks, nBlocks: number, y: number, nameOffset: number, prevBlock?: IBlock) {        
+        const startX = this.PALETTE_WIDTH;
+        [...Array(nBlocks)].forEach( (n, ndx) => { 
+            const b = this.createBlock( blocks, startX + ndx*200, y,
+                            "NewBlock"+(nameOffset+ndx),
+                           PortUtil.portTemplates([ "Port1", "Port2","Port3","Port4","Port5","Port6","Port7","Port8","Port9","Port10","Port11","Port12"]),
+                           );
+            if(prevBlock!==undefined) {
+                const firstPort = prevBlock.ports?.firstObject();
+                console.log("firsPort = ");
+                console.dir(firstPort);
+                if(firstPort !== undefined && b!==undefined) {
+                    firstPort.connectedToId=b.handle;                    
+                }
+            }
+            prevBlock = b;
         });
-        const newElement: IBlock = {uniqueid, x, y, label, ports, isTemplate,
+        return prevBlock;
+    }
+
+    protected createBlock(blocks: Blocks, x: number, y: number, label: string, 
+                          portInfos: IPortInfo[], isTemplate: boolean=false) {
+        const ports: Ports = new Ports("Ports", FlowchartUtil.MAX_PORTS_PER_BLOCK);
+        portInfos.forEach( (pi) => {
+             const port: IPort = {label: pi.label, handle: 0, connectedToId: pi.connectedToId};
+             const h = ports.add(port);
+             if(h!==undefined) {
+                 port.handle=h;
+             }
+        });
+
+        const newBlock: IBlock = {handle: 0, x, y, label, ports, isTemplate,
                                     lastX: x, lastY: y
                                    };
-        return newElement;
+        const h = blocks.add(newBlock);
+        if(h!==undefined) {
+            newBlock.handle = h;
+            return newBlock;
+        }
+        return undefined;
     }
+
+
+
 
     protected formatBlock(e: IBlock) {
         const block: IBlockLayout = {...e};
-        
-                
-        /*
-        const rectY=y+textHeight+2*rectGapY;
-        const rectHeight = h-textHeight-3*rectGapY;
-        */
-
 
         const {pointedBlockId, selectedBlockId} = this.state;
         const vars: IBlockRenderVars = {block, pointedBlockId, selectedBlockId};
@@ -534,84 +548,91 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
         );
 
         return (
-            <React.Fragment key={block.uniqueid}>
+            <React.Fragment key={block.handle}>
 
                {frame}
                {rect}
                {text}
 
-               {block.ports.map( (p, ndx) => this.formatPort(e, p, ndx) )}
+               {block.ports.list().map( (h, ndx) => {
+                    const port = block.ports.safeGet(h);
+                    if(port!==undefined) {
+                       return this.formatPort(e, port, ndx);
+                    }
+                    return null;
+                })}
 
             </React.Fragment>
         );
     }
 
 
-    protected createBlockTemplateInfo(t: IBlockTemplate, ndx: number) {
-        console.log("addBlockTemplate header="+t.label);
+    protected createTemplateBlock(blocks: Blocks, t: IBlockTemplate, ndx: number) {
         const x = this.VIEW_X + this.TEMPLATE_GAP_X;
-        const y = (BlockUtil.BLOCK_HEIGHT + this.TEMPLATE_GAP_Y) * ndx + this.TEMPLATE_GAP_Y;
-        return this.createElementInfo(x, y, t.label, [], true);
+        const y = (BlockUtil.BLOCK_HEIGHT + this.TEMPLATE_GAP_Y) * ndx + this.TEMPLATE_GAP_Y + this.PALETTE_HEADER_HEIGHT;
+        return this.createBlock(blocks, x, y, t.label, [], true);
     }
 
     protected formatBlocks() {
-        // in order to correctly render z-order we have to first render all non-selected elements 
-        // and render the selected element last
-        const selId = this.state.selectedBlockId;
-        let jsxSelected=null;
-        let jsxOthers=null;
-        if(selId !== undefined ) {
-            const {[selId]: selBlock, ...blocks} = this.state.blocks;
-            jsxSelected = this.formatBlock(selBlock);
-            jsxOthers = Object.values(blocks).map( (b) => this.formatBlock(b));
-        } else {
-            jsxOthers = Object.values(this.state.blocks).map( (b) => this.formatBlock(b));
-        }
         return (
             <React.Fragment>
-                {jsxOthers}
-                {jsxSelected}
+                {this.state.blocks.list().map( (h) => {
+                    const b = this.state.blocks.safeGet(h);
+                    if(b!==undefined) {
+                        return this.formatBlock(b);
+                    }
+                    return null;
+                })}
             </React.Fragment>            
         );
     }
 
     protected formatConnections() {
         const conns: JSX.Element[] = [];
-        Object.values(this.state.blocks).forEach( (b) => 
-           b.ports.forEach( (p, ndx) => {
-               if(p.connectedToId!==undefined) {
-                   const jsx = this.formatConnection(b, p, ndx);
-                   if(jsx !== undefined) {
-                    conns.push(jsx);
-                   }                   
-               }
-           })
-        );
+        this.state.blocks.list().forEach( (h) => {
+            const b = this.state.blocks.safeGet(h);
+            if( b!==undefined) {
+                this.formatBlockConnections(conns, b)
+           }
+        });
         return conns;
     }
 
+    protected formatBlockConnections(conns: JSX.Element[], b: IBlock) {
+        b.ports.list().forEach( (h, ndx) => {
+            const p = b.ports.safeGet(h);
+            if(p!==undefined && p.connectedToId!==undefined) {
+                const jsx = this.formatConnection(b, p, ndx);
+                if(jsx !== undefined) {
+                    conns.push(jsx);
+                }
+            }
+        })
+    }
+          
+
     protected formatConnection( fromBlock: IBlock, fromPort: IPort, fromPortNo: number ) {
-        console.log("formatConnection from = " + fromBlock.uniqueid + " to = " + fromPort.connectedToId);
         if(fromPort.connectedToId !== undefined) {
-            const toBlock = this.state.blocks[fromPort.connectedToId];
-            const connProps = PortUtil.connProps(fromBlock, fromPort, fromPortNo, toBlock);
-            const {key, line1Props, line2Props, line3Props} = connProps;
-            console.log("ttttttttt connProps=");
-            console.dir(connProps);
-            return (
-                <React.Fragment key={key}>
-                   <defs>
-                      <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
-                         <path d="M0,0 L0,6 L9,3 z" fill="#f00" />
-                      </marker>
-                   </defs>
-                   <line {...line1Props} /> 
-                   <line {...line2Props} /> 
-                   <line {...line3Props} markerEnd="url(#arrow)" />
-                   
-                </React.Fragment>                
-            );    
-            //  markerEnd="url(#arrow)" />
+            const toBlock = this.state.blocks.get(fromPort.connectedToId);
+            if(toBlock!==undefined) {
+                const connProps = PortUtil.connProps(fromBlock, fromPort, fromPortNo, toBlock);
+                const {key, line1Props, line2Props, line3Props} = connProps;
+                //console.dir(connProps);
+                return (
+                    <React.Fragment key={key}>
+                       <defs>
+                          <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
+                             <path d="M0,0 L0,6 L9,3 z" fill="#f00" />
+                          </marker>
+                       </defs>
+                       <line {...line1Props} /> 
+                       <line {...line2Props} /> 
+                       <line {...line3Props} markerEnd="url(#arrow)" />
+                       
+                    </React.Fragment>                
+                );    
+                 //  markerEnd="url(#arrow)" />    
+            }
         }
         return undefined;
     }
@@ -624,7 +645,7 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
                selectedPortId, 
                pointedPortId, 
                lastMousePos } = this.state;
-
+            
         const vars: IPortVars = {
             block, 
             port: p, 
@@ -683,20 +704,41 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
     }
     
     protected formatPalette(x: number, y: number, w: number, h: number) {
+        const headerHeight = this.PALETTE_HEADER_HEIGHT;
+        const paletteY = y + headerHeight;
+        const textX = x + w/2;
+        const textY = y + this.PALETTE_TEXT_HEIGHT + this.PALETTE_HEADER_GAP_Y;
         return (
             <React.Fragment>
-               <rect id="palette" x={x} y={y} width={w} height={h} className="palette">                
+               <rect id="paletteheader" x={x} y={y} width={w} height={headerHeight} 
+                    className="palette-header"
+                >                                
+               </rect>
+               <text x={textX} y={textY} className = "palette-text" textAnchor="middle" >
+                   Block Templates
+               </text>
+               <rect id="palette" x={x} y={paletteY} width={w} height={h} 
+                     className="palette">                
                </rect>
             </React.Fragment>            
         );
     }
 
+    public notifyChange() {
+        const blocks: IFlowchart = BlockUtil.blocksToInfo(this.state.blocks);
+        this.props.onFlowChange(blocks);
+    }
+
     public render() {
-        const viewBox = this.VIEW_X + " " + this.VIEW_Y + " " + this.VIEW_WIDTH + " " + this.VIEW_HEIGHT;
+        const viewBox = this.VIEW_X + " " + this.VIEW_Y + " " + 
+                        this.VIEW_WIDTH + " " + this.VIEW_HEIGHT;
         return (
-            <React.Fragment>
-                <button onClick={ () => this.addBlock()}>Add</button>
+            <div className="flowchart-container">
+              <div className="flowchart-pane">
+              <button onClick={ () => this.addBlock()}>Test</button>
+                <hr />
                 <svg id="canvas" xmlns="http://www.w3.org/2000/svg" 
+                    width={this.VIEW_WIDTH} height={this.VIEW_HEIGHT}
                     viewBox={viewBox}
                     onMouseDown = { (e) => this.onMouseDown(e) }
                     onMouseUp = { (e) => this.onMouseUp(e) }
@@ -712,8 +754,10 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
                     { this.formatBlocks() }
                     { this.formatConnections() }
                 </svg>
-            </React.Fragment>
-        )
+                <ValidationError name={this.props.name} error={this.props.error} />
+              </div>
+            </div>
+        );
     }
 }
  

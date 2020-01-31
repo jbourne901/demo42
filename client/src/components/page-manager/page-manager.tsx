@@ -38,7 +38,6 @@ class PageManagerInternal extends React.Component<IProps, IState> {
 
     constructor(props: IProps) {
         super(props);
-        console.log("PageManager");
         this.epageSvc = Service.epage();
         this.authSvc = Service.auth();
         this.local = Service.localization().local(PageManagerInternal.LOCALIZATION_KEY);
@@ -58,12 +57,10 @@ class PageManagerInternal extends React.Component<IProps, IState> {
     }
 
     startLoading() {
-        console.log("PageManager - startLoading");
         this.setState({isLoading: true});
     }
 
     stopLoading() {
-        console.log("PageManager - stopLoading");
         this.setState({isLoading: false});
     }
 
@@ -80,7 +77,6 @@ class PageManagerInternal extends React.Component<IProps, IState> {
     }
 
     serviceGetCallback(res: IEPageListResult) {
-        console.log("PageManager - serviceGetCallback");
         if(res.result === "OK") {
             this.setState({isLoading: false, pages: res.payload});
             return;
@@ -89,8 +85,6 @@ class PageManagerInternal extends React.Component<IProps, IState> {
     }
 
     serviceGetError(err: any) {
-        console.error("PageManager - serviceGetError err="+err.toString());
-        console.dir(err);
         if(err.toString()==="Cancel") {            
             return;
         }
@@ -108,20 +102,16 @@ class PageManagerInternal extends React.Component<IProps, IState> {
     }
 
     public componentWillUnmount() {
-        console.log("PageManager - componentWillUnmount");
         if(this.epageListCancel) {
             this.epageListCancel.cancel();
         }
     }
 
     public render() {
-        console.log("PageManager - render()");
         const isLoggedIn = this.authSvc.isLoggedIn();
-        console.log("PageManager.render - isLoggedIn="+isLoggedIn);
         if(!isLoggedIn ) {
             return <Redirect to="/" />;
         }
-        console.dir(this.props);
         const authName = this.authSvc.getAuthName() || "";
         const loggedInAsLabel = (this.local("loggedinas") || "Logged in as") + ": " + authName;
         const usersLabel = this.local("users");

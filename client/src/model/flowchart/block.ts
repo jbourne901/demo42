@@ -1,18 +1,31 @@
-import {IPort} from "./port";
+import {Ports} from "./port";
 import ILabelledShape from "./labelled-shape";
 import FlowchartUtil from "./util";
 import IShape from "./shape";
 import ICoords from "./coords";
+import OrderedList from "../../framework/ordered-list";
+import { parseHandle, IHandle } from "../handle";
+import {PortUtil, IPortInfo} from "./port";
+import {IBlockTemplate} from "./template";
 
 export interface IBlock extends ILabelledShape {
-    ports: IPort[];
+    ports: Ports;
     isTemplate: boolean;
     lastX: number;
     lastY: number;
 }
 
+export interface IBlockInfo extends ILabelledShape {
+    ports: IPortInfo[]
+};
+
+/*
 export interface IBlocks {
     [name: string]: IBlock;
+}
+*/
+export class Blocks extends OrderedList<IBlock> {
+    
 }
 
 export interface IBlockLayout extends IBlock {
@@ -21,8 +34,8 @@ export interface IBlockLayout extends IBlock {
 
 export interface IBlockRenderVars {
     block: IBlockLayout;
-    pointedBlockId?: string;
-    selectedBlockId?: string;
+    pointedBlockId?: IHandle;
+    selectedBlockId?: IHandle;
 }
 
 interface IBlockProps {
@@ -55,65 +68,52 @@ export class BlockUtil {
     public static readonly BLOCK_HEIGHT=120;
     public static readonly HEADER_TEXT_HEIGHT=22;
     public static readonly HEADER_TEXT_GAP_X = 10;
+    public static readonly HEADER_TEXT_SYMBOL_WIDTH = 10;
 
 
     public static extractBlockId(e: React.BaseSyntheticEvent) {
         const id: string = (e.target as any).id;
-        if(id !== undefined && id.indexOf("dragconn")<0 ) {
-            return FlowchartUtil.extractTag(e, "block");
+        if(id !== undefined && id.indexOf("dragconn")<0 && id.indexOf("conn")<0 ) {
+            const str = FlowchartUtil.extractTag(e, "block");
+            if(str !== undefined && str.length>0) {
+                const h = parseHandle(str);
+                return h;
+            }            
         }
         return undefined;        
     }
-
-    public static findBlockIndexByUniqueId(blocks: IBlock[], uniqueId?: string) {
-        if(uniqueId) {
-            return blocks.findIndex( (el) => el.uniqueid===uniqueId);
-        }
-        return undefined;
-    }
-
-    public static findBlockByUniqueId(blocks: IBlock[], uniqueId?: string) {
-        if(uniqueId) {
-            const ndx = BlockUtil.findBlockIndexByUniqueId(blocks, uniqueId);
-            if ( ndx !== undefined && ndx >= 0 ) {
-                return blocks[ndx];
-            }    
-        }
-        return undefined;
-    }
-
-    public static pieceKey(blockUniqueid: string, piece: string) {
+    public static pieceKey(blockHandle: IHandle, piece: string) {
         const delim = FlowchartUtil.FLD_DELIM;
-        return "block" + delim + blockUniqueid + delim + piece;
+        return "block" + delim + blockHandle + delim + piece;
     }
 
-    public static frameKey(blockUniqueid: string) {
-        return BlockUtil.pieceKey(blockUniqueid, "frame");
+    public static frameKey(blockHandle: IHandle) {
+        return BlockUtil.pieceKey(blockHandle, "frame");
     }
 
-    public static rectKey(blockUniqueid: string) {
-        return BlockUtil.pieceKey(blockUniqueid, "rect");
+    public static rectKey(blockHandle: IHandle) {
+        return BlockUtil.pieceKey(blockHandle, "rect");
     }
 
-    public static textKey(blockUniqueid: string) {
-        return BlockUtil.pieceKey(blockUniqueid, "text");
+    public static textKey(blockHandle: IHandle) {
+        return BlockUtil.pieceKey(blockHandle, "text");
     }
 
-    public static isPointed(block: IBlock, pointedBlockId?: string) {
+    public static isPointed(block: IBlock, pointedBlockId?: IHandle) {
         if(pointedBlockId !== undefined) {
-            return block.uniqueid === pointedBlockId;
+            return block.handle === pointedBlockId;
         }
         return false;
     }
 
-    public static isSelected(block: IBlock, selectedBlockId?: string) {
+    public static isSelected(block: IBlock, selectedBlockId?: IHandle) {
         if(selectedBlockId !== undefined) {
-            return block.uniqueid === selectedBlockId;
+            return block.handle === selectedBlockId;
         }
         return false;
     }
 
-    public static frameClass(block: IBlock, pointedBlockId?: string, selectedBlockId?: string) {
+    public static frameClass(block: IBlock, pointedBlockId?: IHandle, selectedBlockId?: IHandle) {
         let clsName = "block";
         const isPointed = BlockUtil.isPointed(block, pointedBlockId);
         const isSelected = BlockUtil.isSelected(block, selectedBlockId);
@@ -126,22 +126,41 @@ export class BlockUtil {
         return clsName;
     }
 
-    public static rectClass(block: IBlock, pointedBlockId?: string, selectedBlockId?: string) {
+    public static rectClass(block: IBlock, pointedBlockId?: IHandle, selectedBlockId?: IHandle) {
         return  "block-rect";
     }
 
-    public static textClass(block: IBlock, pointedBlockId?: string, selectedBlockId?: string) {
+    public static textClass(block: IBlock, pointedBlockId?: IHandle, selectedBlockId?: IHandle) {
         return  "block-text";
     }
 
-    public static blockWidth(block: IBlock) {
+    protected static blockWidth(block: IBlock) {
         //TODO dynamically calculate block width
-        return BlockUtil.BLOCK_WIDTH;
+        //return BlockUtil.BLOCK_WIDTH;
+        let width = BlockUtil.BLOCK_WIDTH;
+        const hdrWidth = BlockUtil.headerWidth(block) + 2 * BlockUtil.HEADER_TEXT_GAP_X;
+        const portsWidth = PortUtil.portsWidth(block.ports) + 2 * BlockUtil.RECT_GAP_X;
+        if(hdrWidth>width) {
+            width=hdrWidth;
+        }
+        if(portsWidth>width) {
+            width=portsWidth;
+        }
+        return width;
+    }
+
+    protected static headerWidth(block: IBlock) {
+        return block.label.length * BlockUtil.HEADER_TEXT_SYMBOL_WIDTH;        
     }
 
     public static blockHeight(block: IBlock) {
         //TODO dynamically calculate block height
-        return BlockUtil.BLOCK_HEIGHT;
+        let height = BlockUtil.BLOCK_HEIGHT;        
+        const rectHeight = this.rectHeight(block) + BlockUtil.HEADER_TEXT_HEIGHT + 4 * BlockUtil.RECT_GAP_Y;
+        if(rectHeight>height) {
+            height = rectHeight;
+        }
+        return height;
     }
 
     public static frameX(block: IBlock) {
@@ -185,13 +204,18 @@ export class BlockUtil {
     }
 
     public static rectHeight(block: IBlock) {
-        return BlockUtil.frameHeight(block) - BlockUtil.HEADER_TEXT_HEIGHT - 3 * BlockUtil.RECT_GAP_Y;
+        let height = BlockUtil.BLOCK_HEIGHT - BlockUtil.HEADER_TEXT_HEIGHT - 3 * BlockUtil.RECT_GAP_Y;;
+        const portHeight = PortUtil.portsHeight(block.ports) + 60//;3 * BlockUtil.RECT_GAP_Y;
+        if(portHeight > height) {
+            height = portHeight;
+        }
+        return height;
     }
 
     public static frameProps(vars: IBlockRenderVars): IFrameProps {
         const {block, pointedBlockId, selectedBlockId} = vars;
 
-        const key = BlockUtil.frameKey(block.uniqueid);
+        const key = BlockUtil.frameKey(block.handle);
         const id = key;
         const className = BlockUtil.frameClass(block, pointedBlockId, selectedBlockId);
         const x = BlockUtil.frameX(block);
@@ -208,7 +232,7 @@ export class BlockUtil {
 
     public static rectProps(vars: IBlockRenderVars): IRectProps {
         const {block, pointedBlockId, selectedBlockId} = vars;
-        const id = BlockUtil.rectKey(block.uniqueid);
+        const id = BlockUtil.rectKey(block.handle);
         const key = id;
         const className = BlockUtil.rectClass(block, pointedBlockId, selectedBlockId);
         const x = BlockUtil.rectX(block); //blockX+rectGapX
@@ -223,7 +247,7 @@ export class BlockUtil {
    
     public static textProps(vars: IBlockRenderVars): ITextProps {
         const {block, pointedBlockId, selectedBlockId} = vars;
-        const id = BlockUtil.textKey(block.uniqueid);
+        const id = BlockUtil.textKey(block.handle);
         const key = id;
         const className = BlockUtil.textClass(block, pointedBlockId, selectedBlockId);
         const x = BlockUtil.textStartX(block); //frameX+this.TEXT_GAP_X
@@ -265,6 +289,25 @@ export class BlockUtil {
         }
  //       console.log(" isWithinFrame found="+found+" x="+x+" y="+y+" block="+b.label+" b.x="+blockX+" b.y="+blockY+" b.w="+blockWidth+" b.h="+blockHeight);
         return found;
+    }
+
+    public static blocksToInfo(blocks: Blocks) {
+        const blks: IBlockInfo[] = [];
+        blocks.list().forEach( (h) => {
+            const b: IBlock|undefined = blocks.safeGet(h);
+            if(b !== undefined && !b.isTemplate) {
+                const {handle, label, x, y} = b;
+                const ports = PortUtil.portsToInfo(b.ports);
+                const bi: IBlockInfo = { handle, label, x, y, ports: ports};
+                blks.push(bi);
+            }
+        });
+        return blks;
+    }
+
+    public static template0(label: string) {
+        const t: IBlockTemplate = {label, name: label, ports: [ PortUtil.portTemplate("OK")]};
+        return t;
     }
 
 }

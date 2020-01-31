@@ -1,18 +1,20 @@
 call TRACE('create SP CRUDFunctionsCreate');
 
 create or replace procedure CRUDFunctionsCreate(tablename entitytable.table%TYPE)
-as $sp1$
+as $spcc1$
 declare
 begin
 
 call ListFunctionCreate(tablename);
+call GetFunctionCreate(tablename);
 call AddFunctionCreate(tablename);
 call UpdateFunctionCreate(tablename);
 call DeleteFunctionCreate(tablename);
+call SaveFunctionCreate(tablename);
 
 
 end
-$sp1$
+$spcc1$
 language plpgsql;
 
 
