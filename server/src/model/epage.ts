@@ -17,6 +17,7 @@ export interface IEPageField {
    name: string;
    label: string;
    type: string;
+   tab: string;
 }
 
 export interface IEPage {

@@ -9,7 +9,7 @@ begin
 call CRUDFunctionsCreate('agentscenario');
 
 
-select * from StandardEPageAddJSON('agentscenario', 'Agent Scenarios', 'name/Name', 'name/Name, flow/Flow/flowchart', testsession2(), '{"editpage": {"actions": { "all":{"location":"top"} } } }' ) into _js;
+select * from StandardEPageAddJSON('agentscenario', 'Agent Scenarios', 'name/Name/text', 'name/Name/text/general, flow/Flow/flowchart/flow', testsession2(), '{"editpage": {"actions": { "all":{"location":"top"} } } }' ) into _js;
 
 
 end

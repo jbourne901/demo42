@@ -1,6 +1,6 @@
 import React from 'react';
 import {withRouter, RouteComponentProps} from "react-router-dom";
-import { IEPage, IEPageField, IEPageAction } from '../../../model/epage';
+import { IEPage, IEPageField, IEPageAction, IETabbedFields } from '../../../model/epage';
 import Loading from '../../loading';
 import IErrors from '../../../model/errors';
 import EditField from "../../edit-field";
@@ -13,6 +13,7 @@ import { ILanguageInfo } from '../../../model/language';
 import FlowchartEdit from '../../flowchart/edit';
 import {BlockUtil} from "../../../model/flowchart/block";
 import IFlowchart from '../../../model/flowchart';
+import "./intedit.css";
 
 interface IProps extends RouteComponentProps, ILanguageProps {
     epageid: string;
@@ -277,6 +278,38 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
         }
     }
 
+    protected addTabField(tabs: IETabbedFields, fi: IEPageField) {
+        let tab = fi.tab;
+        if(tab!==undefined && tab.length>0) {
+            const tabfields = tabs[tab] || [];
+            tabfields.push(fi);
+            tabs[tab] = tabfields;
+        }
+    }
+
+    protected formatTabs(tab: string, tabIndex: number) {
+        const href = "#"+tab+"-tab";
+        const label = tab;
+        const className=(tabIndex===0) ? "nav-link active" : "nav-link";
+        return (
+           <li className={className} key={tab}>
+               <a data-toggle="tab" href={href}>
+                    {label}
+               </a>
+           </li>
+        );
+    }
+
+    protected formatTabFields(tab: string, tabIndex: number, fields: IEPageField[]) {
+        const id=tab+"-tab";
+        const className=(tabIndex===0) ? "tab-pane fade in fieldstab active" : "tab-pane fade in fieldstab";
+        return (            
+            <div className={className} id={id} key={id}> 
+                {fields.map( (fi) => this.formatField(fi))}
+            </div>                
+        );
+    }
+
     public render() {
         console.log("EPageIntEdit render");
         if(this.state.isLoading) {
@@ -293,13 +326,41 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
 
         const grp = (this.state.epage.entity).toLowerCase();        
         const header = epage.label.toLowerCase();
-        console.log("0000000000 header="+header);
         const localizedHeader = this.props.localization.getLocalization(grp, header) || epage.label || "Edit";
         
+        const tabs: IETabbedFields = {};
+        fields.forEach( (fi) => this.addTabField(tabs, fi));
+
+        console.log("000000000 tabs=");
+        console.dir(tabs);
+
+        let renderedFields = null;
+        let tabHeads = null;        
+        if ( Object.keys(tabs).length === 0  ) {
+            renderedFields = fields.map( (f)=> this.formatField(f));
+            console.log("tabs is blank , renderedFields=");
+            console.dir(renderedFields);
+        } else {
+            tabHeads =  (
+               <ul className="nav nav-tabs">
+                  { Object.keys(tabs).map( (t, ndx) => this.formatTabs(t, ndx) ) }
+               </ul>
+            );
+            renderedFields = (
+                <div className="tab-content clearfix">
+                     { Object.keys(tabs).map( (t, ndx) => this.formatTabFields(t, ndx, tabs[t]) ) }
+                </div>
+            );
+        }
+        
         return (
+        <React.Fragment>
             <div className="container">
                 <h2>{localizedHeader}</h2>
-                <form onSubmit={ (e:React.FormEvent<HTMLFormElement>) =>
+            </div>
+
+            <div className="container">
+               <form onSubmit={ (e:React.FormEvent<HTMLFormElement>) =>
                                          this.onSubmit(e) 
                                }
                 >
@@ -310,8 +371,8 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
                     </div>
 
                     <hr/>
-
-                    {fields.map( (f)=> this.formatField(f))}
+                    {tabHeads}
+                    {renderedFields}
                     <div>
                         <ValidationError name="error" error={error} />
                     </div>
@@ -321,6 +382,7 @@ class EPageIntEditInternal extends React.Component<IProps, IState> {
                     </div>
                 </form>
             </div>
+        </React.Fragment>
         );
     }   
 }

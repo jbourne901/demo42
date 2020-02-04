@@ -30,7 +30,7 @@ begin
 call TRACE('1TestStandardEditFieldsJSON1');
 
 
-select * from StandardEditFieldsJSON('name/Name, username/Username, password/Password/password, password2/Confirm password/password') into _js;
+select * from StandardEditFieldsJSON('name/Name/text/tab1, username/Username/text/tab2, password/Password/password, password2/Confirm password/password') into _js;
 
 call TRACE( concat( '1TestStandardEditFieldsJSON ', _js) );
 

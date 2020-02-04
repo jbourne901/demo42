@@ -367,16 +367,62 @@ export class PortUtil {
         const dlg = FlowchartUtil.FLD_DELIM;
         return PortUtil.connKey(fromBlock, fromPort) + dlg + "line" + lineno;
     }
-    
-    protected static connLineClass(fromBlock: IBlock, fromPort: IPort, lineno: number) {
-        return "block-conn-line"+lineno;
+
+    public static isPointed(block: IBlock, port: IPort, pointedBlockId?: IHandle,
+        pointedPortId?: IHandle) {
+        if(pointedBlockId !== undefined && block.handle === pointedBlockId &&
+           pointedPortId !== undefined && port.handle === pointedPortId
+          ) {
+                return true;
+        }
+        return false;
     }
 
-    protected static connLine1Props(fromBlock: IBlock, fromPort: IPort, fromPortNo: number, toBlock: IBlock) {
-        const lineno=1
+    public static isSelected(block: IBlock, port: IPort, selectedBlockId?: IHandle,
+        selectedPortId?: IHandle) {
+        if(selectedBlockId !== undefined && block.handle === selectedBlockId &&
+           selectedPortId !== undefined && port.handle === selectedPortId
+          ) {
+                return true;
+        }
+        return false;
+    }
+
+    
+    protected static connLineClass(fromBlock: IBlock, fromPort: IPort, lineno: number,
+        selectedBlockId?: IHandle, pointedBlockId?: IHandle, selectedPortId?: IHandle, 
+        pointedPortId?: IHandle) {
+        let className = "block-conn-line"+lineno;
+        if( this.isSelected(fromBlock, fromPort, selectedBlockId, selectedPortId) ) {
+            className += "-selected";
+        }
+        if( this.isPointed(fromBlock, fromPort, pointedBlockId, pointedPortId) ) {
+            className += "-pointed";
+        }
+        return className;
+    }
+
+    protected static connLineProps(fromBlock: IBlock, fromPort: IPort, 
+        fromPortNo: number, toBlock: IBlock,
+        lineno: number,
+        selectedBlockId?: IHandle, pointedBlockId?: IHandle, selectedPortId?: IHandle, pointedPortId?: IHandle) {
         const key = PortUtil.connLineKey(fromBlock, fromPort, lineno);
         const id = key;
-        const className = PortUtil.connLineClass(fromBlock, fromPort, lineno);
+        const className = PortUtil.connLineClass(fromBlock, fromPort, lineno, 
+            selectedBlockId, pointedBlockId, selectedPortId, pointedPortId);
+
+            console.log("connLineProps className="+className+
+            " selectedBlockId="+selectedBlockId+" pointedBlockId="+pointedBlockId+
+            " selectedPortId="+selectedPortId+" pointedPortId="+pointedPortId+
+            " fromBlock.handle="+fromBlock.handle+" fromPort.handle="+fromPort.handle);
+        return {key, id, className};
+    }
+
+    protected static connLine1Props(fromBlock: IBlock, fromPort: IPort, fromPortNo: number, toBlock: IBlock,
+        selectedBlockId?: IHandle, pointedBlockId?: IHandle, selectedPortId?: IHandle, pointedPortId?: IHandle) {
+        const {key, id, className} = this.connLineProps(fromBlock, toBlock, fromPortNo, toBlock,
+            1,
+            selectedBlockId, pointedBlockId, selectedPortId, pointedPortId);
         const x1 = PortUtil.knobMidPointX(fromBlock, fromPort);
         const y1 = PortUtil.knobMidPointY(fromBlock, fromPortNo, fromPort);
         const x2 = x1 + this.CONN_GAP_X;
@@ -385,11 +431,11 @@ export class PortUtil {
         return props;
     }
 
-    protected static connLine2Props(fromBlock: IBlock, fromPort: IPort, fromPortNo: number, toBlock: IBlock) {
-        const lineno=2
-        const key = PortUtil.connLineKey(fromBlock, fromPort, lineno);
-        const id = key;
-        const className = PortUtil.connLineClass(fromBlock, fromPort, lineno);
+    protected static connLine2Props(fromBlock: IBlock, fromPort: IPort, fromPortNo: number, toBlock: IBlock,
+        selectedBlockId?: IHandle, pointedBlockId?: IHandle, selectedPortId?: IHandle, pointedPortId?: IHandle) {
+        const {key, id, className} = this.connLineProps(fromBlock, toBlock, fromPortNo, toBlock,
+            2,
+            selectedBlockId, pointedBlockId, selectedPortId, pointedPortId);
         const x1 = PortUtil.knobMidPointX(fromBlock, fromPort) + this.CONN_GAP_X;
         const y1 = PortUtil.knobMidPointY(fromBlock, fromPortNo, fromPort);
         const x2 = BlockUtil.entryPortX(toBlock) - this.CONN_GAP_X;
@@ -399,11 +445,11 @@ export class PortUtil {
     }
 
     
-    protected static connLine3Props(fromBlock: IBlock, fromPort: IPort, fromPortNo: number, toBlock: IBlock) {
-        const lineno=3
-        const key = PortUtil.connLineKey(fromBlock, fromPort, lineno);
-        const id = key;
-        const className = PortUtil.connLineClass(fromBlock, fromPort, lineno);
+    protected static connLine3Props(fromBlock: IBlock, fromPort: IPort, fromPortNo: number, toBlock: IBlock,
+        selectedBlockId?: IHandle, pointedBlockId?: IHandle, selectedPortId?: IHandle, pointedPortId?: IHandle) {
+        const {key, id, className} = this.connLineProps(fromBlock, toBlock, fromPortNo, toBlock,
+            3,
+            selectedBlockId, pointedBlockId, selectedPortId, pointedPortId);
         const x1 = BlockUtil.entryPortX(toBlock) - this.CONN_GAP_X;
         const y1 = BlockUtil.entryPortY(toBlock);
         const x2 = BlockUtil.entryPortX(toBlock) - this.CONN_ARROW_GAP_X;
@@ -413,13 +459,21 @@ export class PortUtil {
     }
 
  
-    public static connProps(fromBlock: IBlock, fromPort: IPort, fromPortNo: number, toBlock: IBlock) {
+    public static connProps(fromBlock: IBlock, fromPort: IPort, fromPortNo: number, toBlock: IBlock,
+        selectedBlockId?: IHandle, pointedBlockId?: IHandle, selectedPortId?: IHandle, pointedPortId?: IHandle) {
+
+            console.log("connProps selectedBlockId="+selectedBlockId+" pointedBlockId="+
+            pointedBlockId+" selectedPortId="+selectedPortId+" pointedPortId="+pointedPortId);
+    
         const key = PortUtil.connKey(fromBlock, fromPort);
         const id = key;
         const className = PortUtil.connClassName(fromBlock, fromPort);
-        const line1Props = PortUtil.connLine1Props(fromBlock, fromPort, fromPortNo, toBlock);
-        const line2Props = PortUtil.connLine2Props(fromBlock, fromPort, fromPortNo, toBlock);
-        const line3Props = PortUtil.connLine3Props(fromBlock, fromPort, fromPortNo, toBlock);
+        const line1Props = PortUtil.connLine1Props(fromBlock, fromPort, fromPortNo, toBlock,
+             selectedBlockId, pointedBlockId, selectedPortId, pointedPortId);
+        const line2Props = PortUtil.connLine2Props(fromBlock, fromPort, fromPortNo, toBlock,
+            selectedBlockId, pointedBlockId, selectedPortId, pointedPortId);
+        const line3Props = PortUtil.connLine3Props(fromBlock, fromPort, fromPortNo, toBlock,
+            selectedBlockId, pointedBlockId, selectedPortId, pointedPortId);
         const props: IConnRenderProps = { id, key, className, 
                                           line1Props,
                                           line2Props,

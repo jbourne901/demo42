@@ -8,14 +8,17 @@ _js JSONB;
 _name varchar(50);
 _label text;
 _type varchar(40);
+_tab varchar(40);
 begin
 
 select split_part(str, delim,1) into _name;
 select split_part(str, delim,2) into _label;
 select split_part(str, delim,3) into _type;
+select split_part(str, delim,4) into _tab;
 
 
-select StandardEditFieldJSON(_name, _label, _type) into _js;
+
+select StandardEditFieldJSON(_name, _label, _type, _tab) into _js;
 
 _js := SafeMergeOptionsJSON(options, _name, _js);
 
@@ -42,7 +45,7 @@ begin
 select * from StandardEditFieldFromTextJSON('name/Name', '/') into _js;
 call TRACE( concat('TestStandardEditFieldFromTextJSON ', _js) );
 
-select * from StandardEditFieldFromTextJSON('password/Password/password', '/') into _js;
+select * from StandardEditFieldFromTextJSON('password/Password/password/tab40', '/') into _js;
 call TRACE( concat('TestStandardEditFieldFromTextJSON ', _js) );
 
 

@@ -35,8 +35,8 @@ select _name, _label, _query, _pkname, _type, _entity;
 
 select epage.id into _id from epage where name=_name;
 
-insert into epagefield(name,label,epageid,ordno, type)
-select name,label,_id,row_number() over() ordno, type from json_to_recordset(_fields::json) as x(name TYPE_EPAGEFIELDNAME, label TYPE_EPAGEFIELDLABEL, type TYPE_EPAGEFIELDTYPE);
+insert into epagefield(name,label,epageid,ordno, type, tab)
+select name,label,_id,row_number() over() ordno, type, tab from json_to_recordset(_fields::json) as x(name TYPE_EPAGEFIELDNAME, label TYPE_EPAGEFIELDLABEL, type TYPE_EPAGEFIELDTYPE, tab TYPE_EPAGEFIELDTAB);
 
 insert into epageaction(name,label,epageid,ordno,type,query,isitemaction, nextpage, confirm, location, style)
 select name,label,_id,row_number() over() ordno, type, query, coalesce(isitemaction, false), nextpage, confirm, location, style from json_to_recordset(_pageactions::json) 

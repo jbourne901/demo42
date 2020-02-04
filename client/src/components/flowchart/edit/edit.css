@@ -6,12 +6,12 @@
 }
 
 .block-selected {
-    stroke:blue !important;
+    stroke:rgb(16,50,100) !important;
     stroke-width:3 !important;
 }
 
 .block-pointed {
-    stroke:lightblue !important;
+    stroke:rgb(16,50,100) !important;
     fill: rgb(207,252,255) !important;
     stroke-width:3 !important;
 }
@@ -122,24 +122,37 @@
 
 
 .block-conn-line1 {
-    stroke: red;
-    stroke-width: 2;
+    stroke: rgb(16,50,100);
+    stroke-width: 4;
 }
 
 .block-conn-line2 {
-    stroke: red;
-    stroke-width: 2;
+    stroke: rgb(16,50,100);
+    stroke-width: 4;
 }
 
 .block-conn-line3 {
-    stroke: red;
-    stroke-width: 2;
+    stroke: rgb(16,50,100);
+    stroke-width: 4;
 }
 
 .flowchart-container {
+    resize: both;
     overflow: scroll;
 }
 
 .flowchart-pane {
     height: 600px !important;
+}
+
+.flowchart-table-row {
+    vertical-align: top;
+}
+
+.flowchart-table-left {
+    width: 1px;
+}
+
+.flowchart-table-right {
+    width: 1px;
 }

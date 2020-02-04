@@ -61,7 +61,7 @@ begin
 
 call TRACE('1TestStandardEditPageJSON1');
 
-select * from StandardEditPageJSON('workgroup', 'Edit Workgroup', 'name/Name', false) into _js;
+select * from StandardEditPageJSON('workgroup', 'Edit Workgroup', 'name/Name/text/general', false) into _js;
 
 call TRACE( concat( '1TestStandardEditPageJSON ', _js) );
 

@@ -52,6 +52,9 @@ CREATE DOMAIN TYPE_EPAGEFIELDLABEL varchar(50);
 drop domain if exists TYPE_EPAGEFIELDTYPE;
 CREATE DOMAIN TYPE_EPAGEFIELDTYPE varchar(20);
 
+drop domain if exists TYPE_EPAGEFIELDTAB;
+CREATE DOMAIN TYPE_EPAGEFIELDTAB varchar(20);
+
 
 call TRACE('create table epagefield');
 
@@ -60,7 +63,8 @@ create table epagefield (
   name TYPE_EPAGEFIELDNAME NOT NULL,
   label TYPE_EPAGEFIELDLABEL,
   type TYPE_EPAGEFIELDTYPE,
-  ordno int,
+  tab TYPE_EPAGEFIELDTAB,
+  ordno int,  
   epageid TYPE_EPAGEID,
   FOREIGN KEY(epageid) references epage(id) on delete cascade
 );

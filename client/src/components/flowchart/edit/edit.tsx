@@ -9,6 +9,7 @@ import {IBlockTemplate} from "../../../model/flowchart/template";
 import FlowchartUtil from '../../../model/flowchart/util';
 import ValidationError from '../../validation-error';
 import IFlowchart from '../../../model/flowchart';
+import TemplateTree from '../templatetree';
 
 
 // state-changing operations:
@@ -56,7 +57,8 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
     private readonly VIEW_Y=0;
     private readonly VIEW_WIDTH=3000;
     private readonly VIEW_HEIGHT=2000;
-    private readonly PALETTE_WIDTH=200;
+    //private readonly PALETTE_WIDTH=200;
+    private readonly PALETTE_WIDTH=0;
     private readonly PALETTE_TEXT_HEIGHT=20;
     private readonly PALETTE_HEADER_GAP_Y=10;
     private readonly PALETTE_HEIGHT=2000;
@@ -75,9 +77,11 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
 
     componentDidMount() {        
         const blocks : Blocks = new Blocks("Blocks", FlowchartUtil.MAX_BLOCKS);
+        /* temporary
         this.props.templates.forEach( (t: IBlockTemplate, ndx: number) => {
             this.createTemplateBlock(blocks, t, ndx);                        
         });
+        */
         console.log("componentDidMount value=");
         console.dir(this.props.value);
         const originalHandles: { [handle: string]: IHandle } = {};
@@ -151,12 +155,13 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
     }
   
   
-    protected isInCanvas(block: IBlock) {
+    protected isInCanvas(block: ICoords) {
         if (block.x >= this.VIEW_X + this.PALETTE_WIDTH) {
             return true;
         }
         return false;
     }
+    
 
     protected clearBlockSelectionState() {
         return {
@@ -262,7 +267,6 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
         // 9 - dragging nothing, drop on something -- currently impossble as mouseDown outside of block resets selection
         // todo: implement mouse lasso selection
         //const ndx = this.eventTargetBlockIndexPlus1(e);
-
 
         if(this.isDraggingPort()) {
             const dropOnBlock = this.eventTargetBlock(e);
@@ -389,9 +393,13 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
 
     protected instantiateTemplate(blocks: Blocks, templateBlock: IBlock) {
         const template = this.getTemplate(templateBlock.label);
-        const maxBlockHandle = blocks.getMaxAllocatedHandle();
+        return this.instantiateBlockTemplate(blocks, templateBlock, template);
+    }
+
+    protected instantiateBlockTemplate(blocks: Blocks, coords: ICoords, template?: IBlockTemplate) {
+        const maxBlockHandle = blocks.getMaxAllocatedHandle()+2;
         if(template!==undefined) {
-            const {x,y} = templateBlock;
+            const {x,y} = coords;
             this.createBlock(blocks, x, y, template.label+"_"+maxBlockHandle,template.ports);
         }
     }
@@ -612,17 +620,20 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
           
 
     protected formatConnection( fromBlock: IBlock, fromPort: IPort, fromPortNo: number ) {
-        if(fromPort.connectedToId !== undefined) {
-            const toBlock = this.state.blocks.get(fromPort.connectedToId);
-            if(toBlock!==undefined) {
-                const connProps = PortUtil.connProps(fromBlock, fromPort, fromPortNo, toBlock);
-                const {key, line1Props, line2Props, line3Props} = connProps;
+        const toBlock = this.state.blocks.safeGet(fromPort.connectedToId);
+        const {selectedBlockId, pointedBlockId, selectedPortId, pointedPortId} = this.state;
+        console.log("formatConnection selectedBlockId="+selectedBlockId+" pointedBlockId="+
+        pointedBlockId+" selectedPortId="+selectedPortId+" pointedPortId="+pointedPortId);
+        if(toBlock!==undefined) {
+            const connProps = PortUtil.connProps(fromBlock, fromPort, fromPortNo, toBlock,
+                selectedBlockId, pointedBlockId, selectedPortId, pointedPortId);
+            const {key, line1Props, line2Props, line3Props} = connProps;
                 //console.dir(connProps);
-                return (
+            return (
                     <React.Fragment key={key}>
                        <defs>
-                          <marker id="arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
-                             <path d="M0,0 L0,6 L9,3 z" fill="#f00" />
+                          <marker id="arrow" markerWidth="6" markerHeight="6" refX="0" refY="1" orient="auto" markerUnits="strokeWidth">
+                             <path d="M0,0 L0,2 L3,1 z" fill="rgb(16,50,100)" />
                           </marker>
                        </defs>
                        <line {...line1Props} /> 
@@ -632,7 +643,6 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
                     </React.Fragment>                
                 );    
                  //  markerEnd="url(#arrow)" />    
-            }
         }
         return undefined;
     }
@@ -708,6 +718,9 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
         const paletteY = y + headerHeight;
         const textX = x + w/2;
         const textY = y + this.PALETTE_TEXT_HEIGHT + this.PALETTE_HEADER_GAP_Y;
+        if( true ) {
+            return null;
+        }
         return (
             <React.Fragment>
                <rect id="paletteheader" x={x} y={y} width={w} height={headerHeight} 
@@ -729,31 +742,69 @@ class FlowchartEditInternal extends React.Component<IProps, IState> {
         this.props.onFlowChange(blocks);
     }
 
+    protected onMouseUpContainer(e: React.DragEvent) {
+        e.persist();
+        const coords: ICoords = this.getMousePosition(e);
+        const data = e.dataTransfer.getData("Text");
+        console.dir("data="+data);
+        console.log("-----onDrop data="+data+" coords="+coords.x+","+coords.y);
+        if(data && data.length>0) {
+            const template = this.getTemplate(data);
+            if(template !== undefined) {   
+                const blocks = this.state.blocks;                
+                if( this.isInCanvas(coords) ) {
+                    this.instantiateBlockTemplate(blocks, coords, template);
+                    this.setState({ ...(this.dragEndState()),
+                        blocks                              
+                    });
+                    this.notifyChange();
+                    return;
+                }
+                this.setState({ ...(this.dragEndState()),
+                                blocks                              
+                              });
+        
+
+            }
+        }
+    }
+
     public render() {
         const viewBox = this.VIEW_X + " " + this.VIEW_Y + " " + 
                         this.VIEW_WIDTH + " " + this.VIEW_HEIGHT;
+            //                           {this.formatPalette(this.VIEW_X, this.VIEW_Y, this.PALETTE_WIDTH, this.PALETTE_HEIGHT)}                        
         return (
             <div className="flowchart-container">
               <div className="flowchart-pane">
               <button onClick={ () => this.addBlock()}>Test</button>
                 <hr />
-                <svg id="canvas" xmlns="http://www.w3.org/2000/svg" 
-                    width={this.VIEW_WIDTH} height={this.VIEW_HEIGHT}
-                    viewBox={viewBox}
-                    onMouseDown = { (e) => this.onMouseDown(e) }
-                    onMouseUp = { (e) => this.onMouseUp(e) }
-                    onMouseMove = { (e) => this.onMouseMove(e) }
-                    onMouseLeave = { (e) => this.onMouseLeave(e) }
-                >
-                    <rect id="bkg" x={this.VIEW_X} y={this.VIEW_Y} 
-                          width={this.VIEW_WIDTH} height={this.VIEW_HEIGHT} 
-                          className="canvas"
-                    >
-                    </rect>
-                    {this.formatPalette(this.VIEW_X, this.VIEW_Y, this.PALETTE_WIDTH, this.PALETTE_HEIGHT)}
-                    { this.formatBlocks() }
-                    { this.formatConnections() }
-                </svg>
+                <table>
+                    <tr className="flowchart-table-row">
+                        <td className="flowchart-table-left">
+                           <TemplateTree templates={this.props.templates}/>
+                        </td>
+                        <td className="flowchart-table-right">
+                            <svg id="canvas" xmlns="http://www.w3.org/2000/svg" 
+                                width={this.VIEW_WIDTH} height={this.VIEW_HEIGHT}
+                                viewBox={viewBox}
+                                onMouseDown = { (e) => this.onMouseDown(e) }
+                                onMouseUp = { (e) => this.onMouseUp(e) }
+                                onMouseMove = { (e) => this.onMouseMove(e) }
+                                onMouseLeave = { (e) => this.onMouseLeave(e) }
+                                onDragOver = { (e) => e.preventDefault()}
+                                onDrop={ (e) => this.onMouseUpContainer(e) }
+                            >
+                                <rect id="bkg" x={this.VIEW_X} y={this.VIEW_Y} 
+                                    width={this.VIEW_WIDTH} height={this.VIEW_HEIGHT} 
+                                    className="canvas"
+                                >
+                                </rect>
+                                { this.formatBlocks() }
+                                { this.formatConnections() }
+                            </svg>
+                        </td>                        
+                    </tr>                    
+                </table>                
                 <ValidationError name={this.props.name} error={this.props.error} />
               </div>
             </div>
