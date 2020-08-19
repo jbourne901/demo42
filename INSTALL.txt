@@ -1,10 +1,44 @@
 1) Install pre-requisites
 
-sudo apt install postgresql
+sudo apt install postgresql postgresql-client postgresql-controb libpq-dev postgresql-server-deev pgadmin4
 
-Edit db/.env:
+
+2) Edit postgresql configs:
+
+edit /etc/postgresql/<version>/main/pg_hba.conf
+
+add 
+
+host all all all md5
+
+also change (i.e. replace from peer to md5)
+
+local   all  all md5
+
+and
+
+local all postgres  md5
+
+
+/etc/init.d/postgresql restart
+
+3) Setup postgres admin password
+
+su - postgres
+psql
+ALTER USER postgres PASSWORD '<dbadminpass>';
+
+
+3) Edit db/.env:
 
 export dbname=<dbname>
 export dbpass=<dbadminpass>
 export username=<dbuser>
 export userpass=<dbpass>
+
+4) execute script to create DB schema:
+
+cd db
+sudo ./run.sh
+
+
