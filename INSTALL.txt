@@ -1,0 +1,10 @@
+1) Install pre-requisites
+
+sudo apt install postgresql
+
+Edit db/.env:
+
+export dbname=<dbname>
+export dbpass=<dbadminpass>
+export username=<dbuser>
+export userpass=<dbpass>
